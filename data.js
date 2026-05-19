@@ -847,6 +847,10 @@ const CHAPTERS = [
 const TOTAL_LEVELS = CHAPTERS.reduce((s, c) => s + c.levels, 0);
 const TOTAL_HOURS_KEY = '≈ 22h';
 
+// Progression — meters of altitude that count as one cleared level. Tune to taste.
+// chapter 1 (12 levels) completes at ~960m; chapter 9 (8 levels) at ~640m.
+const LEVEL_DISTANCE_M = 80;
+
 // Distance display — translates the special "Heart of the Void" key for chapter 9.
 function chapterDistance(ch) {
   return ch.distanceRaw != null ? ch.distanceRaw : t('distance_special.heart_of_void');
@@ -879,6 +883,12 @@ function chapterProgress(ch) {
 function bestiaryKnownCount() {
   // A chapter's boss is "known" if it's at least available
   return CHAPTERS.filter(c => chapterState(c) !== 'sealed').length;
+}
+
+// First chapter not yet completed — what "Continue the Journey" should resume into.
+// Falls back to the last chapter once the whole journey is done.
+function currentChapter() {
+  return CHAPTERS.find(c => chapterState(c) !== 'completed') || CHAPTERS[CHAPTERS.length - 1];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -932,6 +942,7 @@ const TYPE_TO_VARIANTS = {
 window.CHAPTERS         = CHAPTERS;
 window.TOTAL_LEVELS     = TOTAL_LEVELS;
 window.TOTAL_HOURS_KEY  = TOTAL_HOURS_KEY;
+window.LEVEL_DISTANCE_M = LEVEL_DISTANCE_M;
 window.INFINITE_ZONES   = INFINITE_ZONES;
 window.PLANET_VARIANTS  = PLANET_VARIANTS;
 window.TYPE_TO_VARIANTS = TYPE_TO_VARIANTS;
@@ -947,6 +958,7 @@ window.chaptersDoneCount   = chaptersDoneCount;
 window.chapterState        = chapterState;
 window.chapterProgress     = chapterProgress;
 window.bestiaryKnownCount  = bestiaryKnownCount;
+window.currentChapter      = currentChapter;
 
 window.getBestScore   = getBestScore;
 window.setBestScore   = setBestScore;

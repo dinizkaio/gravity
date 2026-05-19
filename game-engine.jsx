@@ -65,7 +65,6 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
     };
     const startingY = player.y;
 
-    let worldY = 0;
     let cameraY = startingY - H() * 0.62;
 
     let anchors = [];
@@ -197,7 +196,7 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
     canvas.addEventListener('mouseleave', onUp);
     canvas.addEventListener('touchstart', onTouchStart, { passive: false });
     canvas.addEventListener('touchend', onTouchEnd, { passive: false });
-    canvas.addEventListener('touchcancel', onUp);
+    canvas.addEventListener('touchcancel', onUp, { passive: false });
 
     function findNearestAnchor() {
       let best = null;
@@ -251,6 +250,7 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
       orbitAnchor = null;
     }
 
+    let deathTimeoutId = 0;
     function die(reasonKey) {
       if (!alive) return;
       alive = false;
@@ -262,7 +262,7 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
           color: i % 3 === 0 ? '#fff' : '#f4b860'
         });
       }
-      setTimeout(() => onDeath && onDeath(scoreVal, Math.floor(maxAltitude / 5), reasonKey), 1300);
+      deathTimeoutId = setTimeout(() => onDeath && onDeath(scoreVal, Math.floor(maxAltitude / 5), reasonKey), 1300);
     }
 
     let last = performance.now();
@@ -341,7 +341,6 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
       // Camera follow
       const targetCamY = player.y - H() * 0.62;
       cameraY += (targetCamY - cameraY) * Math.min(1, dt * 6);
-      worldY = Math.min(worldY, cameraY);
 
       // Altitude
       const altitude = Math.max(0, startingY - player.y);
@@ -409,15 +408,15 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
       }
       particles = particles.filter(p => p.life > 0);
 
-      // Infinite-mode zone tracking
+      // Infinite-mode zone tracking — wraps after one full lap through all zones
       if (isInfinite) {
-        const meters = maxAltitude / 5;
+        const totalDepth = ZONES.reduce((s, z) => s + z.depth, 0);
+        const meters = (maxAltitude / 5) % totalDepth;
         let cum = 0;
         let zIdx = 0;
         for (let i = 0; i < ZONES.length; i++) {
           cum += ZONES[i].depth;
           if (meters < cum) { zIdx = i; break; }
-          zIdx = (i + 1) % ZONES.length;
         }
         if (zIdx !== currentZoneIndex) {
           currentZoneIndex = zIdx;
@@ -627,7 +626,8 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
 
     function currentPalette(now) {
       if (!isInfinite) return basePalette;
-      const meters = maxAltitude / 5;
+      const totalDepth = ZONES.reduce((s, z) => s + z.depth, 0);
+      const meters = (maxAltitude / 5) % totalDepth;
       let cum = 0;
       let i = 0;
       for (; i < ZONES.length; i++) {
@@ -638,7 +638,7 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
       const next = (zIdx + 1) % ZONES.length;
       const depth = ZONES[zIdx].depth;
       const into = (meters - cum) / depth;
-      const t = into < 0.75 ? 0 : (into - 0.75) / 0.25;
+      const t = into < 0.75 ? 0 : Math.min(1, (into - 0.75) / 0.25);
       const A = ZONES[zIdx].palette;
       const B = ZONES[next].palette;
       return [
@@ -831,6 +831,7 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
     // ─── Cleanup ───────────────────────────────────────────────────────────
     return () => {
       cancelAnimationFrame(raf);
+      if (deathTimeoutId) clearTimeout(deathTimeoutId);
       window.removeEventListener('resize', resize);
       canvas.removeEventListener('mousedown', onDown);
       canvas.removeEventListener('mouseup', onUp);

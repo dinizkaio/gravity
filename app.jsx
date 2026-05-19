@@ -54,10 +54,22 @@ function App() {
     const prevBest = window.getBestScore();
     const isNewBest = score > prevBest;
     if (isNewBest) window.setBestScore(score);
+
+    // Persist chapter progression: each ~LEVEL_DISTANCE_M meters of altitude counts as
+    // one cleared level. Capped at the chapter's level count, so reaching the threshold
+    // completes the chapter and unlocks the next one (chapterState picks this up).
+    if (mode === 'chapter' && chapter) {
+      const levelsReached = Math.min(
+        chapter.levels,
+        Math.floor(distance / window.LEVEL_DISTANCE_M)
+      );
+      if (levelsReached > 0) window.setProgress(chapter.id, levelsReached);
+    }
+
     setLastRun({ score, distance, isNewBest, reason: reason || 'default' });
     setPaused(false);
     setScreen('gameover');
-  }, []);
+  }, [chapter, mode]);
 
   const restartRun = useCallback(() => {
     setPaused(false);
@@ -79,7 +91,7 @@ function App() {
 
       {screen === 'menu' && (
         <window.MainMenu
-          onPlay={() => goPlay(window.CHAPTERS[0])}
+          onPlay={() => goPlay(window.currentChapter())}
           onInfinite={goInfinite}
           onJourney={goMap}
           onBestiary={goBestiary}

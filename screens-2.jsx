@@ -290,6 +290,7 @@ function Bestiary({ onBack }) {
           return (
             <div key={c.id}
                  onMouseEnter={() => setHover(i)}
+                 onClick={() => setHover(i)}
                  style={{
                    border: '1px solid var(--rule)',
                    padding: '24px 22px',
@@ -348,6 +349,13 @@ function SettingsScreen({ onBack }) {
   const s = window.getSettings();
   const locale = window.getLocale();
 
+  // Auto-dismiss the toast after 2.4s; cleaned up if the screen unmounts in between.
+  useE(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 2400);
+    return () => clearTimeout(t);
+  }, [toast]);
+
   function refresh() { force(n => n + 1); }
   function changeLocale(loc) { window.setLocale(loc); refresh(); }
   function update(k, v) { window.setSettings({ [k]: v }); refresh(); }
@@ -355,7 +363,6 @@ function SettingsScreen({ onBack }) {
     window.resetProgress();
     setConfirm(false);
     setToast(window.t('settings.reset_done'));
-    setTimeout(() => setToast(null), 2400);
   }
 
   return (
