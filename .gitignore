@@ -1,0 +1,29 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node (if anyone introduces tooling later)
+node_modules/
+*.log
+npm-debug.log*
+.npm
+.cache/
+
+# Build outputs (if a build step is added later)
+dist/
+build/
+out/
+
+# Local screenshots / dev artifacts
+checks/
+*.local
+.env
+.env.local
