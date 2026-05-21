@@ -122,7 +122,7 @@ const I18N = {
       infinite: 'Modo Infinito',
       infinite_desc: 'subida sem fim · zonas que mudam',
       best: 'recorde · {n} pts',
-      footer: '{n} fases · 9 chefões · ≈ 22h de ascensão',
+      footer: '{n} capítulos · 9 chefões · ≈ 22h de ascensão',
     },
     intro: {
       label: 'Prólogo',
@@ -160,9 +160,10 @@ const I18N = {
         duration: 'Duração',
         biome: 'Bioma',
       },
-      action_continue: 'Continuar — fase {n}',
+      action_continue: 'Retomar capítulo',
       action_begin: 'Começar capítulo',
-      action_next_in: '· próxima fase em ≈ 5 min ·',
+      action_replay: 'Rejogar capítulo',
+      action_next_in: '',
       locked_hint: '◇ Selado — complete o capítulo anterior para abrir',
       levels_short: '{n} fases',
     },
@@ -368,7 +369,7 @@ const I18N = {
       infinite: 'Endless Mode',
       infinite_desc: 'endless ascent · shifting zones',
       best: 'best · {n} pts',
-      footer: '{n} levels · 9 bosses · ≈ 22h of ascent',
+      footer: '{n} chapters · 9 bosses · ≈ 22h of ascent',
     },
     intro: {
       label: 'Prologue',
@@ -406,9 +407,10 @@ const I18N = {
         duration: 'Duration',
         biome: 'Biome',
       },
-      action_continue: 'Continue — level {n}',
+      action_continue: 'Resume chapter',
       action_begin: 'Begin chapter',
-      action_next_in: '· next level in ≈ 5 min ·',
+      action_replay: 'Replay chapter',
+      action_next_in: '',
       locked_hint: '◇ Sealed — complete the previous chapter to unlock',
       levels_short: '{n} levels',
     },
@@ -614,7 +616,7 @@ const I18N = {
       infinite: 'Modo Infinito',
       infinite_desc: 'ascenso sin fin · zonas cambiantes',
       best: 'récord · {n} pts',
-      footer: '{n} fases · 9 jefes · ≈ 22h de ascenso',
+      footer: '{n} capítulos · 9 jefes · ≈ 22h de ascenso',
     },
     intro: {
       label: 'Prólogo',
@@ -652,9 +654,10 @@ const I18N = {
         duration: 'Duración',
         biome: 'Bioma',
       },
-      action_continue: 'Continuar — fase {n}',
+      action_continue: 'Retomar capítulo',
       action_begin: 'Comenzar capítulo',
-      action_next_in: '· próxima fase en ≈ 5 min ·',
+      action_replay: 'Rejugar capítulo',
+      action_next_in: '',
       locked_hint: '◇ Sellado — completa el capítulo anterior para abrir',
       levels_short: '{n} fases',
     },
@@ -841,55 +844,80 @@ const I18N = {
 // ─────────────────────────────────────────────────────────────────────────────
 // CHAPTERS — language-neutral gameplay data
 // All text (name/subtitle/quote/desc/biome/boss/hazards) is in I18N.chapters.<id>.
-// Distance is stored as raw range; special chapter 9 uses key 'heart_of_void'.
+// Each chapter is a "phase" of the ascent with a width in metres of altitude.
+// startM / endM are computed cumulatively below; the curve widens by 1000m per
+// chapter so later phases are progressively longer to clear.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const CHAPTERS = [
-  { id: 1, roman: 'I',    distanceRaw: '0 — 2 400 ly',       levels: 12, duration: '≈ 1h 40min', palette: ['#1a2540', '#3a5a8a', '#f4b860'], bossColor: '#6db8d5' },
-  { id: 2, roman: 'II',   distanceRaw: '2 400 — 6 800 ly',   levels: 14, duration: '≈ 2h 10min', palette: ['#2a1f1a', '#6a4a35', '#d97744'], bossColor: '#a07050' },
-  { id: 3, roman: 'III',  distanceRaw: '6 800 — 14 200 ly',  levels: 14, duration: '≈ 2h 30min', palette: ['#3d2818', '#a55a2a', '#f4b860'], bossColor: '#f4b860' },
-  { id: 4, roman: 'IV',   distanceRaw: '14 200 — 24 000 ly', levels: 14, duration: '≈ 2h 40min', palette: ['#0f2438', '#4080a8', '#a8d8e8'], bossColor: '#a8d8e8' },
-  { id: 5, roman: 'V',    distanceRaw: '24 000 — 38 000 ly', levels: 14, duration: '≈ 2h 50min', palette: ['#1a1830', '#5a4a7a', '#9a88c0'], bossColor: '#9a88c0' },
-  { id: 6, roman: 'VI',   distanceRaw: '38 000 — 56 000 ly', levels: 15, duration: '≈ 3h 00min', palette: ['#080a14', '#1a2030', '#3a4a6a'], bossColor: '#1a2030' },
-  { id: 7, roman: 'VII',  distanceRaw: '56 000 — 78 000 ly', levels: 15, duration: '≈ 3h 20min', palette: ['#1a0810', '#5a1a2a', '#d04060'], bossColor: '#d04060' },
-  { id: 8, roman: 'VIII', distanceRaw: '78 000 — 96 000 ly', levels: 12, duration: '≈ 2h 50min', palette: ['#0a1a2a', '#3a6890', '#c0e0f0'], bossColor: '#c0e0f0' },
-  { id: 9, roman: 'IX',   distanceRaw: null,                 levels:  8, duration: '≈ 1h 20min', palette: ['#2a1a08', '#d97744', '#ffd890'], bossColor: '#ffd890' },
+  { id: 1, roman: 'I',    widthM: 2000,        distanceRaw: '0 — 2 400 ly',       levels: 12, duration: '≈ 1h 40min', palette: ['#1a2540', '#3a5a8a', '#f4b860'], bossColor: '#6db8d5' },
+  { id: 2, roman: 'II',   widthM: 3000,        distanceRaw: '2 400 — 6 800 ly',   levels: 14, duration: '≈ 2h 10min', palette: ['#2a1f1a', '#6a4a35', '#d97744'], bossColor: '#a07050' },
+  { id: 3, roman: 'III',  widthM: 4000,        distanceRaw: '6 800 — 14 200 ly',  levels: 14, duration: '≈ 2h 30min', palette: ['#3d2818', '#a55a2a', '#f4b860'], bossColor: '#f4b860' },
+  { id: 4, roman: 'IV',   widthM: 5000,        distanceRaw: '14 200 — 24 000 ly', levels: 14, duration: '≈ 2h 40min', palette: ['#0f2438', '#4080a8', '#a8d8e8'], bossColor: '#a8d8e8' },
+  { id: 5, roman: 'V',    widthM: 6000,        distanceRaw: '24 000 — 38 000 ly', levels: 14, duration: '≈ 2h 50min', palette: ['#1a1830', '#5a4a7a', '#9a88c0'], bossColor: '#9a88c0' },
+  { id: 6, roman: 'VI',   widthM: 7000,        distanceRaw: '38 000 — 56 000 ly', levels: 15, duration: '≈ 3h 00min', palette: ['#080a14', '#1a2030', '#3a4a6a'], bossColor: '#1a2030' },
+  { id: 7, roman: 'VII',  widthM: 8000,        distanceRaw: '56 000 — 78 000 ly', levels: 15, duration: '≈ 3h 20min', palette: ['#1a0810', '#5a1a2a', '#d04060'], bossColor: '#d04060' },
+  { id: 8, roman: 'VIII', widthM: 9000,        distanceRaw: '78 000 — 96 000 ly', levels: 12, duration: '≈ 2h 50min', palette: ['#0a1a2a', '#3a6890', '#c0e0f0'], bossColor: '#c0e0f0' },
+  { id: 9, roman: 'IX',   widthM: null,        distanceRaw: null,                 levels:  8, duration: '≈ 1h 20min', palette: ['#2a1a08', '#d97744', '#ffd890'], bossColor: '#ffd890' },
 ];
+
+// Cumulative altitude thresholds. Chapter N runs from startM (inclusive) to
+// endM (exclusive); the last chapter has endM = Infinity (Heart of the Void).
+(function computeChapterBounds() {
+  let cum = 0;
+  for (const c of CHAPTERS) {
+    c.startM = cum;
+    if (c.widthM == null) { c.endM = Infinity; }
+    else { c.endM = cum + c.widthM; cum = c.endM; }
+  }
+})();
 
 const TOTAL_LEVELS = CHAPTERS.reduce((s, c) => s + c.levels, 0);
 const TOTAL_HOURS_KEY = '≈ 22h';
-
-// Progression — meters of altitude that count as one cleared level. Tune to taste.
-// chapter 1 (12 levels) completes at ~960m; chapter 9 (8 levels) at ~640m.
-const LEVEL_DISTANCE_M = 80;
 
 // Distance display — translates the special "Heart of the Void" key for chapter 9.
 function chapterDistance(ch) {
   return ch.distanceRaw != null ? ch.distanceRaw : t('distance_special.heart_of_void');
 }
 
-// Sum of completed levels across all chapters (for "progress · 03 / 118")
+// Which chapter does this altitude (in metres) belong to?
+function chapterFromMeters(m) {
+  for (const c of CHAPTERS) {
+    if (m >= c.startM && m < c.endM) return c;
+  }
+  return CHAPTERS[CHAPTERS.length - 1];
+}
+
+// How many chapters has the player reached so far? Used by the "progress" header.
 function chaptersDoneCount() {
   const p = getProgress();
-  return CHAPTERS.reduce((s, c) => s + Math.min(p[c.id] || 0, c.levels), 0);
+  return CHAPTERS.filter(c => (p[c.id] || 0) > 0).length;
 }
 
-// State derivation — locked / current / completed / available
-function chapterState(ch) {
+// Highest chapter id the player has reached (0 if none yet).
+function maxReachedChapterId() {
   const p = getProgress();
-  const done = p[ch.id] || 0;
-  if (done >= ch.levels) return 'completed';
-  if (done > 0) return 'current';
-  // ch1 always unlocked; others require previous completion
-  if (ch.id === 1) return 'available';
-  const prev = CHAPTERS.find(c => c.id === ch.id - 1);
-  const prevDone = (p[prev.id] || 0) >= prev.levels;
-  return prevDone ? 'available' : 'sealed';
+  let max = 0;
+  for (const c of CHAPTERS) if ((p[c.id] || 0) > 0) max = c.id;
+  return max;
 }
 
+// State derivation. A chapter is "completed" once the player crossed into the
+// next one; "current" is the latest one reached; "available" is the next door
+// out from current. Chapter 1 is always available even at zero progress.
+function chapterState(ch) {
+  const max = maxReachedChapterId();
+  if (max === 0) return ch.id === 1 ? 'available' : 'sealed';
+  if (ch.id < max) return 'completed';
+  if (ch.id === max) return 'current';
+  if (ch.id === max + 1) return 'available';
+  return 'sealed';
+}
+
+// 0 or 1 — has the player set foot in this chapter at least once?
 function chapterProgress(ch) {
   const p = getProgress();
-  return Math.min(p[ch.id] || 0, ch.levels);
+  return (p[ch.id] || 0) > 0 ? 1 : 0;
 }
 
 function bestiaryKnownCount() {
@@ -897,25 +925,28 @@ function bestiaryKnownCount() {
   return CHAPTERS.filter(c => chapterState(c) !== 'sealed').length;
 }
 
-// First chapter not yet completed — what "Continue the Journey" should resume into.
-// Falls back to the last chapter once the whole journey is done.
+// First chapter still in play — what "Continue the Journey" should resume into.
 function currentChapter() {
-  return CHAPTERS.find(c => chapterState(c) !== 'completed') || CHAPTERS[CHAPTERS.length - 1];
+  return CHAPTERS.find(c => chapterState(c) === 'current')
+      || CHAPTERS.find(c => chapterState(c) === 'available')
+      || CHAPTERS[0];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // INFINITE_ZONES — endless mode bands. Names reference i18n zone keys.
+// Each zone lasts 10000m of altitude so transitions feel like real biomes,
+// not background loops.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const INFINITE_ZONES = [
-  { key: 'blue_void',        palette: ['#0a1530', '#3a5a8a', '#6db8d5'], depth: 1200 },
-  { key: 'golden_dust',      palette: ['#2a1f1a', '#a55a2a', '#f4b860'], depth: 1200 },
-  { key: 'violet_nebula',    palette: ['#1a0f2a', '#5a3a7a', '#9a78d0'], depth: 1200 },
-  { key: 'emerald_sea',      palette: ['#0a2018', '#2a5a48', '#6dd5a8'], depth: 1200 },
-  { key: 'crimson_twilight', palette: ['#1a0510', '#5a1a2a', '#d04060'], depth: 1200 },
-  { key: 'sea_of_shadows',   palette: ['#040508', '#1a2030', '#3a4a6a'], depth: 1500 },
-  { key: 'eye_of_abyss',     palette: ['#10000a', '#3a0820', '#7a1a3a'], depth: 1500 },
-  { key: 'aurora',           palette: ['#2a1a08', '#d97744', '#ffd890'], depth: 1500 },
+  { key: 'blue_void',        palette: ['#0a1530', '#3a5a8a', '#6db8d5'], depth: 10000 },
+  { key: 'golden_dust',      palette: ['#2a1f1a', '#a55a2a', '#f4b860'], depth: 10000 },
+  { key: 'violet_nebula',    palette: ['#1a0f2a', '#5a3a7a', '#9a78d0'], depth: 10000 },
+  { key: 'emerald_sea',      palette: ['#0a2018', '#2a5a48', '#6dd5a8'], depth: 10000 },
+  { key: 'crimson_twilight', palette: ['#1a0510', '#5a1a2a', '#d04060'], depth: 10000 },
+  { key: 'sea_of_shadows',   palette: ['#040508', '#1a2030', '#3a4a6a'], depth: 10000 },
+  { key: 'eye_of_abyss',     palette: ['#10000a', '#3a0820', '#7a1a3a'], depth: 10000 },
+  { key: 'aurora',           palette: ['#2a1a08', '#d97744', '#ffd890'], depth: 10000 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -954,7 +985,6 @@ const TYPE_TO_VARIANTS = {
 window.CHAPTERS         = CHAPTERS;
 window.TOTAL_LEVELS     = TOTAL_LEVELS;
 window.TOTAL_HOURS_KEY  = TOTAL_HOURS_KEY;
-window.LEVEL_DISTANCE_M = LEVEL_DISTANCE_M;
 window.INFINITE_ZONES   = INFINITE_ZONES;
 window.PLANET_VARIANTS  = PLANET_VARIANTS;
 window.TYPE_TO_VARIANTS = TYPE_TO_VARIANTS;
@@ -966,11 +996,13 @@ window.onLocaleChange  = onLocaleChange;
 window.SUPPORTED_LOCALES = SUPPORTED_LOCALES;
 
 window.chapterDistance     = chapterDistance;
+window.chapterFromMeters   = chapterFromMeters;
 window.chaptersDoneCount   = chaptersDoneCount;
 window.chapterState        = chapterState;
 window.chapterProgress     = chapterProgress;
 window.bestiaryKnownCount  = bestiaryKnownCount;
 window.currentChapter      = currentChapter;
+window.maxReachedChapterId = maxReachedChapterId;
 
 window.getBestScore   = getBestScore;
 window.setBestScore   = setBestScore;

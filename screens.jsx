@@ -268,7 +268,7 @@ function MainMenu({ onPlay, onInfinite, onJourney, onBestiary, onSettings, hasSa
 
       {/* Bottom corners */}
       <div style={{ position: 'absolute', bottom: 84, left: 48, zIndex: 10 }} className="fade-in">
-        <div className="label">{window.t('menu.footer', { n: window.TOTAL_LEVELS })}</div>
+        <div className="label">{window.t('menu.footer', { n: window.CHAPTERS.length })}</div>
       </div>
       <div style={{ position: 'absolute', bottom: 84, right: 48, zIndex: 10 }} className="fade-in">
         <button className="btn-text" onClick={onSettings}>· {window.t('nav.settings')} ·</button>
@@ -302,7 +302,7 @@ function ChapterMap({ onBack, onPlay, onBoss }) {
         <button className="btn-text" onClick={onBack}>← {window.t('nav.back')}</button>
         <div className="label">— {window.t('map.title')} —</div>
         <div className="label" style={{ opacity: 0.4 }}>
-          {window.t('map.progress', { done: String(done).padStart(2, '0'), total: window.TOTAL_LEVELS })}
+          {window.t('map.progress', { done: String(done).padStart(2, '0'), total: String(window.CHAPTERS.length).padStart(2, '0') })}
         </div>
       </div>
 
@@ -349,8 +349,9 @@ function ChapterMap({ onBack, onPlay, onBoss }) {
                       <div style={{ height: 1, background: 'var(--rule)', position: 'relative', marginTop: 8 }}>
                         <div style={{
                           position: 'absolute', left: 0, top: 0, height: 1,
-                          width: `${(window.chapterProgress(c) / c.levels) * 100}%`,
-                          background: 'var(--amber)'
+                          width: state === 'completed' ? '100%' : (state === 'current' ? '50%' : '0%'),
+                          background: 'var(--amber)',
+                          transition: 'width 0.6s'
                         }} />
                       </div>
                     )}
@@ -394,9 +395,7 @@ function ChapterMap({ onBack, onPlay, onBoss }) {
 function ChapterDetail({ chapter, onPlay, onBoss }) {
   const state = window.chapterState(chapter);
   const locked = state === 'sealed';
-  const current = state === 'current';
   const c = chapter;
-  const progress = window.chapterProgress(c);
   return (
     <div key={c.id} className="fade-in" style={{ animation: 'fadeIn 0.6s ease-out both' }}>
       <div style={{ marginBottom: 32 }}>
@@ -468,13 +467,12 @@ function ChapterDetail({ chapter, onPlay, onBoss }) {
       {!locked && (
         <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
           <button className="btn-ghost primary" onClick={onPlay}>
-            ▸ {current ? window.t('map.action_continue', { n: progress + 1 }) : window.t('map.action_begin')}
+            ▸ {state === 'current'
+                ? window.t('map.action_continue')
+                : state === 'completed'
+                  ? window.t('map.action_replay')
+                  : window.t('map.action_begin')}
           </button>
-          {current && (
-            <div className="label" style={{ color: 'var(--bone-dim)' }}>
-              {window.t('map.action_next_in')}
-            </div>
-          )}
         </div>
       )}
       {locked && (
