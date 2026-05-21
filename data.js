@@ -203,6 +203,7 @@ const I18N = {
         regression: 'Caiu ao passado',
         nopush:     'Sem impulso',
         asteroid:   'Asteroide',
+        collapse:   'A órbita colapsou',
       },
     },
     bestiary: {
@@ -222,6 +223,9 @@ const I18N = {
       in_orbit: 'em órbita',
       hold_to_orbit: 'segure para orbitar',
       entering: 'entrando em',
+      phase_label: 'fase',
+      phase_n: 'Fase {n} · {total}',
+      chapter_complete: 'capítulo completo',
     },
     settings: {
       title: 'Configurações',
@@ -445,6 +449,7 @@ const I18N = {
         regression: 'Fell to the past',
         nopush:     'No impulse',
         asteroid:   'Asteroid',
+        collapse:   'The orbit collapsed',
       },
     },
     bestiary: {
@@ -464,6 +469,9 @@ const I18N = {
       in_orbit: 'in orbit',
       hold_to_orbit: 'hold to orbit',
       entering: 'entering',
+      phase_label: 'phase',
+      phase_n: 'Phase {n} · {total}',
+      chapter_complete: 'chapter complete',
     },
     settings: {
       title: 'Settings',
@@ -687,6 +695,7 @@ const I18N = {
         regression: 'Cayó al pasado',
         nopush:     'Sin impulso',
         asteroid:   'Asteroide',
+        collapse:   'La órbita colapsó',
       },
     },
     bestiary: {
@@ -706,6 +715,9 @@ const I18N = {
       in_orbit: 'en órbita',
       hold_to_orbit: 'mantén para orbitar',
       entering: 'entrando en',
+      phase_label: 'fase',
+      phase_n: 'Fase {n} · {total}',
+      chapter_complete: 'capítulo completo',
     },
     settings: {
       title: 'Ajustes',

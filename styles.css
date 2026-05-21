@@ -277,6 +277,22 @@ html, body { height: 100%; overflow: hidden; background: var(--void-deep); color
   box-shadow: none;
 }
 
+/* Intro screen narrative — anchored between letterbox and bottom controls so the
+   text never overlaps the Continue button on short viewports. */
+.intro-narrative {
+  position: absolute;
+  left: 50%; top: 130px; bottom: 150px;
+  transform: translateX(-50%);
+  width: 800px; max-width: 85%;
+  display: flex; flex-direction: column; justify-content: center;
+  text-align: center;
+  z-index: 10;
+  overflow-y: auto;
+  padding: 8px 16px;
+}
+.intro-line { font-size: 22px; margin-bottom: 12px; line-height: 1.5; letter-spacing: 0.04em; }
+.intro-line.empty { font-size: 0; margin-bottom: 28px; }
+
 /* Zone banner (infinite mode) */
 .zone-banner {
   position: absolute;
@@ -330,6 +346,12 @@ html, body { height: 100%; overflow: hidden; background: var(--void-deep); color
 
   .zone-banner { padding: 18px 24px; }
   .zone-banner .serif { font-size: 24px !important; }
+
+  /* Intro: tighter top/bottom anchoring + smaller text so the prologue fits
+     above the Continue button on short viewports. */
+  .intro-narrative { top: 100px; bottom: 130px; }
+  .intro-line { font-size: 16px; margin-bottom: 8px; }
+  .intro-line.empty { margin-bottom: 18px; }
 }
 
 @media (max-width: 480px) {
@@ -340,6 +362,10 @@ html, body { height: 100%; overflow: hidden; background: var(--void-deep); color
   .lives-row { gap: 8px; }
   .life-dot { width: 8px; height: 8px; }
   .letterbox { height: 24px; }
+
+  .intro-narrative { top: 80px; bottom: 120px; padding: 4px 12px; }
+  .intro-line { font-size: 15px; margin-bottom: 6px; }
+  .intro-line.empty { margin-bottom: 14px; }
 }
 
 /* Portrait orientation (mobile primary) — slightly tighter HUD */
