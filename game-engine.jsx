@@ -19,7 +19,10 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
   const [isHolding, setIsHolding] = useState(false);
   const [zoneKey, setZoneKey] = useState('');
   const [zoneJustChanged, setZoneJustChanged] = useState(false);
-  const [phaseBanner, setPhaseBanner] = useState(null);  // { level, total, complete } | null
+  // { chapterId, complete, key } | null  — temporary banner on phase transitions
+  const [phaseBanner, setPhaseBanner] = useState(null);
+  // The chapter the spark is presently inside (changes mid-run as it climbs)
+  const [liveChapterId, setLiveChapterId] = useState(chapter ? chapter.id : 1);
 
   // Keep latest paused flag readable inside the rAF closure without re-running the engine effect
   const pausedRef = useRef(!!paused);
@@ -52,8 +55,13 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
     const TYPE_TO_VARIANTS = window.TYPE_TO_VARIANTS;
     const VARIANTS = window.PLANET_VARIANTS;
 
+    const CHAPTERS_ALL = window.CHAPTERS;
     const basePalette = chapter ? chapter.palette : ZONES[0].palette;
-    const chapterId = chapter ? chapter.id : 1;
+    // In chapter mode the player starts at the altitude that opens the chosen
+    // phase, so resuming "Aurora" doesn't make you climb through every prior
+    // biome first. worldOffsetM is added to maxAltitude/5 for any altitude-aware
+    // logic (HUD display, phase detection, palette crossfade, difficulty).
+    const worldOffsetM = chapter ? (chapter.startM || 0) : 0;
 
     // Player — launches UPWARD; gravity constantly pulls down.
     const player = {
@@ -98,10 +106,17 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
     let orbitTurns = 0;
     let orbitTurnAccumulator = 0;       // fractional turns; flushed on every full loop
 
-    // Phase tracking (chapter mode). One phase per LEVEL_DISTANCE_M of altitude.
-    const LEVEL_M = window.LEVEL_DISTANCE_M;
-    let currentPhase = 0;               // 1-based once the player crosses the first threshold
-    let chapterCompleteShown = false;
+    // Phase tracking (chapter mode). currentPhaseId is the chapter the player
+    // is presently inside; it only ever moves forward within a run, and each
+    // step is mirrored to localStorage so unlocks survive death.
+    let currentPhaseId = chapter ? chapter.id : 1;
+
+    // Absolute world altitude in metres (the value the HUD shows and the
+    // difficulty/palette/phase logic reads from). Adds the chapter's startM
+    // so resuming a later chapter doesn't reset the visual altitude to zero.
+    function worldMeters() {
+      return (maxAltitude / 5) + worldOffsetM;
+    }
 
     function rand(a, b) { return a + Math.random() * (b - a); }
     function chance(p) { return Math.random() < p; }
@@ -113,10 +128,8 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
         const km = meters / 1000;
         return Math.min(9, 1 + Math.floor(km * 2));
       }
-      // Chapter mode: base = chapterId, ramps up over the chapter (max +2 by the last phase)
-      const total = chapter ? chapter.levels : 12;
-      const phaseFactor = Math.min(1, currentPhase / total);
-      return Math.min(9, chapterId + Math.floor(phaseFactor * 2.5));
+      // Chapter mode: difficulty == id of the chapter the player is currently in.
+      return currentPhaseId;
     }
 
     function anchorType() {
@@ -193,6 +206,11 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
     }
 
     seedWorld();
+
+    // The current chapter is already "reached" the moment the run starts.
+    if (!isInfinite && chapter) window.setProgress(chapter.id, 1);
+    // Seed the HUD altitude at the world offset so it doesn't flash 0.
+    setDistance(worldOffsetM);
 
     // ─── Input ─────────────────────────────────────────────────────────────
     function onDown(e) {
@@ -286,7 +304,9 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
           color: i % 3 === 0 ? '#fff' : '#f4b860'
         });
       }
-      deathTimeoutId = setTimeout(() => onDeath && onDeath(scoreVal, Math.floor(maxAltitude / 5), reasonKey), 1300);
+      // World altitude (run-local + chapter offset) so the game-over screen
+      // shows the same number the HUD just had.
+      deathTimeoutId = setTimeout(() => onDeath && onDeath(scoreVal, Math.floor(maxAltitude / 5) + worldOffsetM, reasonKey), 1300);
     }
 
     let last = performance.now();
@@ -406,31 +426,34 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
       const targetCamY = player.y - H() * 0.62;
       cameraY += (targetCamY - cameraY) * Math.min(1, dt * 6);
 
-      // Altitude
+      // Altitude — `d` here is the run-local altitude in metres; the display
+      // and phase-tracking code use the absolute world altitude (with the
+      // chapter offset folded in), so resuming a later chapter shows the
+      // right number on the HUD.
       const altitude = Math.max(0, startingY - player.y);
       if (altitude > maxAltitude) maxAltitude = altitude;
       const d = Math.floor(maxAltitude / 5);
-      setDistance(d);
+      const worldD = d + worldOffsetM;
+      setDistance(worldD);
       if (d > lastAltitude) {
         scoreVal += (d - lastAltitude);
         setScore(scoreVal);
         lastAltitude = d;
       }
 
-      // Phase tracking (chapter mode) — every LEVEL_M of altitude bumps the phase.
-      // Shows a banner on phase change; a second one when the chapter wraps up.
-      if (!isInfinite && chapter) {
-        const newPhase = Math.floor(d / LEVEL_M) + (d > 0 ? 1 : 0);
-        const total = chapter.levels;
-        if (newPhase > currentPhase && newPhase <= total) {
-          currentPhase = newPhase;
-          setPhaseBanner({ level: newPhase, total, complete: false, key: now });
-          setTimeout(() => setPhaseBanner(b => (b && b.key === now ? null : b)), 2600);
-        } else if (newPhase > total && !chapterCompleteShown) {
-          chapterCompleteShown = true;
-          currentPhase = total;
-          setPhaseBanner({ level: total, total, complete: true, key: now });
-          setTimeout(() => setPhaseBanner(b => (b && b.key === now ? null : b)), 3000);
+      // Phase tracking (chapter mode) — when the spark crosses into a new
+      // chapter band, show a banner and persist the unlock so the next run
+      // can resume from there. The chapter the player started in is already
+      // marked at mount-time.
+      if (!isInfinite) {
+        const liveCap = window.chapterFromMeters(worldD);
+        if (liveCap && liveCap.id > currentPhaseId) {
+          currentPhaseId = liveCap.id;
+          window.setProgress(liveCap.id, 1);
+          setLiveChapterId(liveCap.id);
+          const k = now;
+          setPhaseBanner({ chapterId: liveCap.id, complete: false, key: k });
+          setTimeout(() => setPhaseBanner(b => (b && b.key === k ? null : b)), 2800);
         }
       }
 
@@ -706,22 +729,40 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
     }
 
     function currentPalette(now) {
-      if (!isInfinite) return basePalette;
-      const totalDepth = ZONES.reduce((s, z) => s + z.depth, 0);
-      const meters = (maxAltitude / 5) % totalDepth;
-      let cum = 0;
-      let i = 0;
-      for (; i < ZONES.length; i++) {
-        if (meters < cum + ZONES[i].depth) break;
-        cum += ZONES[i].depth;
+      if (isInfinite) {
+        const totalDepth = ZONES.reduce((s, z) => s + z.depth, 0);
+        const meters = (maxAltitude / 5) % totalDepth;
+        let cum = 0;
+        let i = 0;
+        for (; i < ZONES.length; i++) {
+          if (meters < cum + ZONES[i].depth) break;
+          cum += ZONES[i].depth;
+        }
+        const zIdx = i % ZONES.length;
+        const next = (zIdx + 1) % ZONES.length;
+        const depth = ZONES[zIdx].depth;
+        const into = (meters - cum) / depth;
+        const t = into < 0.75 ? 0 : Math.min(1, (into - 0.75) / 0.25);
+        const A = ZONES[zIdx].palette;
+        const B = ZONES[next].palette;
+        return [
+          lerpColor(A[0], B[0], t),
+          lerpColor(A[1], B[1], t),
+          lerpColor(A[2], B[2], t)
+        ];
       }
-      const zIdx = i % ZONES.length;
-      const next = (zIdx + 1) % ZONES.length;
-      const depth = ZONES[zIdx].depth;
-      const into = (meters - cum) / depth;
-      const t = into < 0.75 ? 0 : Math.min(1, (into - 0.75) / 0.25);
-      const A = ZONES[zIdx].palette;
-      const B = ZONES[next].palette;
+      // Chapter mode — crossfade between chapter palettes based on world altitude.
+      // Last 15% of each band eases into the next; chapter 9 (Heart of the Void)
+      // has infinite width and just holds its own palette.
+      const m = worldMeters();
+      const cap = window.chapterFromMeters(m);
+      const idx = CHAPTERS_ALL.indexOf(cap);
+      const nextCap = CHAPTERS_ALL[Math.min(CHAPTERS_ALL.length - 1, idx + 1)];
+      const width = cap.endM === Infinity ? null : (cap.endM - cap.startM);
+      const into = width != null ? (m - cap.startM) / width : 0;
+      const t = into < 0.85 ? 0 : Math.min(1, (into - 0.85) / 0.15);
+      const A = cap.palette;
+      const B = nextCap.palette;
       return [
         lerpColor(A[0], B[0], t),
         lerpColor(A[1], B[1], t),
@@ -924,12 +965,17 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
   }, [chapter, mode]);
 
   // ─── HUD ─────────────────────────────────────────────────────────────────
+  // In chapter mode, the title/subtitle follow the live chapter (the spark may
+  // climb into the next one mid-run), not the chapter the run started in.
+  const liveChapter = !isInfinite
+    ? (window.CHAPTERS.find(c => c.id === liveChapterId) || window.CHAPTERS[0])
+    : null;
   const title = isInfinite
     ? window.t('menu.infinite')
-    : (chapter ? window.t(`chapters.${chapter.id}.name`) : window.t('chapters.1.name'));
+    : window.t(`chapters.${liveChapter.id}.name`);
   const subtitle = isInfinite
     ? (zoneKey ? window.t(`zones.${zoneKey}`) : window.t('zones.blue_void'))
-    : (chapter ? `${window.t('chapter_label')} ${chapter.roman}` : `${window.t('chapter_label')} I`);
+    : `${window.t('chapter_label')} ${liveChapter.roman}`;
 
   return (
     <div style={{ position: 'absolute', inset: 0 }}>
@@ -981,16 +1027,14 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
         </div>
       )}
 
-      {/* Phase / chapter-complete banner (chapter mode) */}
+      {/* Phase banner (chapter mode) — fires when the spark crosses into a new chapter band */}
       {!isInfinite && phaseBanner && (
         <div key={phaseBanner.key} className="zone-banner">
-          <div className="label" style={{ marginBottom: 6, color: phaseBanner.complete ? 'var(--amber-glow)' : 'var(--bone-faint)' }}>
-            — {phaseBanner.complete ? window.t('hud.chapter_complete') : window.t('hud.phase_label')} —
+          <div className="label" style={{ marginBottom: 6, color: 'var(--amber-glow)' }}>
+            — {window.t('hud.entering')} —
           </div>
           <div className="serif" style={{ fontSize: 36, letterSpacing: '0.16em', color: 'var(--bone)' }}>
-            {phaseBanner.complete
-              ? (chapter ? window.t(`chapters.${chapter.id}.name`) : '')
-              : window.t('hud.phase_n', { n: phaseBanner.level, total: phaseBanner.total })}
+            {window.t(`chapters.${phaseBanner.chapterId}.name`)}
           </div>
         </div>
       )}
