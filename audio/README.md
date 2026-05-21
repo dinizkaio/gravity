@@ -5,12 +5,12 @@ between slots as the player moves through the game.
 
 ## Slots
 
-| Slot   | Used in                                                                 | Currently   |
-|--------|-------------------------------------------------------------------------|-------------|
-| `menu` | intro, main menu, map, bestiary, settings, boss intro, game over        | measured-by-the-dark.mp3 |
-| `act1` | chapter mode chapters 1–3 (Awakening / Broken Belt / Tides of Jupiter)  | measured-by-the-dark.mp3 |
-| `act2` | chapter mode chapters 4–6 (Wanderers / Threshold / Sea of Shadows)      | _silent_    |
-| `act3` | chapter mode chapters 7–9 (Eye of the Abyss / Tesseract / Aurora)       | _silent_    |
+| Slot   | Used in                                                                 | Currently                       |
+|--------|-------------------------------------------------------------------------|---------------------------------|
+| `menu` | intro, main menu, map, bestiary, settings, boss intro, game over        | measured-by-the-dark.mp3        |
+| `act1` | chapter mode chapters 1–3 (Awakening / Broken Belt / Tides of Jupiter)  | against-the-crimson-tide.mp3    |
+| `act2` | chapter mode chapters 4–6 (Wanderers / Threshold / Sea of Shadows)      | contra-a-mare-vermelha.mp3      |
+| `act3` | chapter mode chapters 7–9 (Eye of the Abyss / Tesseract / Aurora)       | contra-a-mare-vermelha-alt.mp3  |
 
 In **infinite mode** the bus cycles `act1 → act2 → act3` by zone index, so
 filling those two slots also colours the endless run.

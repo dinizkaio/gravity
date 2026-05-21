@@ -18,9 +18,9 @@
   // ── Manifest. Replace null with a file path under audio/ as tracks arrive. ──
   const TRACKS = {
     menu: 'audio/measured-by-the-dark.mp3',
-    act1: 'audio/measured-by-the-dark.mp3',
-    act2: null,
-    act3: null,
+    act1: 'audio/against-the-crimson-tide.mp3',
+    act2: 'audio/contra-a-mare-vermelha.mp3',
+    act3: 'audio/contra-a-mare-vermelha-alt.mp3',
   };
 
   let ctx = null;
