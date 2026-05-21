@@ -23,6 +23,9 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
   const [phaseBanner, setPhaseBanner] = useState(null);
   // The chapter the spark is presently inside (changes mid-run as it climbs)
   const [liveChapterId, setLiveChapterId] = useState(chapter ? chapter.id : 1);
+  // Cosmetic sub-phase within the live chapter (1..chapter.levels). Not a save
+  // point — retry always lands at the start of the chapter.
+  const [subPhase, setSubPhase] = useState({ n: 1, total: chapter ? chapter.levels : 12, open: false });
 
   // Keep latest paused flag readable inside the rAF closure without re-running the engine effect
   const pausedRef = useRef(!!paused);
@@ -110,6 +113,11 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
     // is presently inside; it only ever moves forward within a run, and each
     // step is mirrored to localStorage so unlocks survive death.
     let currentPhaseId = chapter ? chapter.id : 1;
+    // Cosmetic sub-phase state (derived from altitude each frame, not persisted).
+    // These two locals guard the React setSubPhase call so it only fires when
+    // the displayed value actually changed.
+    let subPhaseRef = 1;
+    let subPhaseCapRef = chapter ? chapter.id : 1;
 
     // Absolute world altitude in metres (the value the HUD shows and the
     // difficulty/palette/phase logic reads from). Adds the chapter's startM
@@ -444,7 +452,10 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
       // Phase tracking (chapter mode) — when the spark crosses into a new
       // chapter band, show a banner and persist the unlock so the next run
       // can resume from there. The chapter the player started in is already
-      // marked at mount-time.
+      // marked at mount-time. Sub-phases inside a chapter (the cosmetic
+      // "Fase N / Total" counter in the HUD) are derived live from worldD
+      // and aren't save points — death always sends retry to the start of
+      // the chapter, never to a sub-phase.
       if (!isInfinite) {
         const liveCap = window.chapterFromMeters(worldD);
         if (liveCap && liveCap.id > currentPhaseId) {
@@ -454,6 +465,23 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
           const k = now;
           setPhaseBanner({ chapterId: liveCap.id, complete: false, key: k });
           setTimeout(() => setPhaseBanner(b => (b && b.key === k ? null : b)), 2800);
+        }
+
+        // Cosmetic sub-phase counter — split the current chapter into
+        // chapter.levels even slices. Chapter 9 (Heart of the Void) has no
+        // upper bound, so we use a 1000m slice and show "Fase N" without a total.
+        if (liveCap) {
+          const inCapM = Math.max(0, worldD - liveCap.startM);
+          const open = liveCap.widthM == null;
+          const slice = open ? 1000 : (liveCap.widthM / liveCap.levels);
+          const n = open
+            ? Math.floor(inCapM / slice) + 1
+            : Math.min(liveCap.levels, Math.floor(inCapM / slice) + 1);
+          if (n !== subPhaseRef || liveCap.id !== subPhaseCapRef) {
+            subPhaseRef = n;
+            subPhaseCapRef = liveCap.id;
+            setSubPhase({ n, total: liveCap.levels, open });
+          }
         }
       }
 
@@ -984,10 +1012,17 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
         style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none', cursor: isHolding ? 'grabbing' : 'pointer' }}
       />
 
-      {/* HUD top-left: chapter / zone */}
+      {/* HUD top-left: chapter / zone + cosmetic sub-phase counter */}
       <div className="hud-corner hud-tl">
         <div className="label" style={{ marginBottom: 8 }}>{subtitle}</div>
         <div className="serif hud-title" style={{ letterSpacing: '0.04em' }}>{title}</div>
+        {!isInfinite && (
+          <div className="label" style={{ marginTop: 8, color: 'var(--bone-faint)' }}>
+            {subPhase.open
+              ? window.t('hud.phase_open', { n: subPhase.n })
+              : window.t('hud.phase_n', { n: subPhase.n, total: subPhase.total })}
+          </div>
+        )}
       </div>
 
       {/* HUD top-right: altitude + score */}

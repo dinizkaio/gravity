@@ -54,12 +54,20 @@ function App() {
     const prevBest = window.getBestScore();
     const isNewBest = score > prevBest;
     if (isNewBest) window.setBestScore(score);
-    // Chapter unlocks are written by the engine as the spark crosses each
-    // phase threshold, so goDeath just freezes the run summary.
+
+    // The engine writes setProgress as the spark crosses each threshold, but if
+    // anything keeps it from firing for the highest one the player actually
+    // reached (paused right on the edge, render frame skip, etc.), resolve it
+    // from the final distance here so retry always opens the right chapter.
+    if (mode === 'chapter' && distance > 0) {
+      const reached = window.chapterFromMeters(distance);
+      if (reached) window.setProgress(reached.id, 1);
+    }
+
     setLastRun({ score, distance, isNewBest, reason: reason || 'default' });
     setPaused(false);
     setScreen('gameover');
-  }, []);
+  }, [mode]);
 
   const restartRun = useCallback(() => {
     setPaused(false);

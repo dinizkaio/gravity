@@ -226,6 +226,7 @@ const I18N = {
       entering: 'entrando em',
       phase_label: 'fase',
       phase_n: 'Fase {n} · {total}',
+      phase_open: 'Fase {n}',
       chapter_complete: 'capítulo completo',
     },
     settings: {
@@ -473,6 +474,7 @@ const I18N = {
       entering: 'entering',
       phase_label: 'phase',
       phase_n: 'Phase {n} · {total}',
+      phase_open: 'Phase {n}',
       chapter_complete: 'chapter complete',
     },
     settings: {
@@ -720,6 +722,7 @@ const I18N = {
       entering: 'entrando en',
       phase_label: 'fase',
       phase_n: 'Fase {n} · {total}',
+      phase_open: 'Fase {n}',
       chapter_complete: 'capítulo completo',
     },
     settings: {
