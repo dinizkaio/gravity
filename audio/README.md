@@ -17,15 +17,16 @@ filling those two slots also colours the endless run.
 
 ## Adding a new track
 
-1. Drop the file in this folder (`.mp3` / `.ogg` / `.wav` — anything the
-   browser decodes via Web Audio API).
-2. Open `../audio.js` and update the `TRACKS` map at the top:
+1. Drop the file in this folder (`.mp3` / `.ogg` / `.wav` — whatever the
+   browser will stream through an `<audio>` element).
+2. Open `../audio.js` and update the `TRACKS` map at the top with the
+   bare filename:
 
    ```js
    const TRACKS = {
-     menu: 'audio/menu-loop.mp3',
-     act1: 'audio/measured-by-the-dark.mp3',
-     act2: 'audio/your-new-track.mp3',   // <- here
+     menu: 'menu-loop.mp3',
+     act1: 'measured-by-the-dark.mp3',
+     act2: 'your-new-track.mp3',   // <- here
      act3: null,
    };
    ```
@@ -34,6 +35,17 @@ filling those two slots also colours the endless run.
    the player enters that slot.
 
 A slot set to `null` plays silence — useful while you're still composing.
+
+## Why filenames and not full paths?
+
+`audio.js` builds a list of candidate URLs for each track: `audio/<file>`
+first (works on any normal static host), then jsdelivr CDN URLs as a
+backstop. Some preview sandboxes don't serve binary assets reliably —
+`ERR_EMPTY_RESPONSE` — and the CDN fallback covers that without needing
+any extra configuration.
+
+If you fork or rename the repo, update the `CDN_PREFIXES` array near the
+top of `audio.js` accordingly.
 
 ## Notes
 
