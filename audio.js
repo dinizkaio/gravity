@@ -6,8 +6,11 @@
 // element). SFX still use Web Audio so we can synthesize them on the fly.
 //
 // Tracks are referenced by SLOT, not by chapter id, so adding new music
-// is just an edit to the TRACKS map below. A null slot fades out and
-// stays silent.
+// is just an edit to the TRACKS map below. Each slot holds a PLAYLIST
+// (array of filenames). The bus shuffles the order on first entry,
+// crossfades between tracks as one ends, and resumes where it left off
+// if the player leaves and returns to the same slot. A null/empty slot
+// fades out and stays silent.
 //
 //   menu : intro, main menu, map, bestiary, settings, boss intro, game over
 //   act1 : chapter mode chapters 1–3 (Awakening / Broken Belt / Tides of Jupiter)
@@ -16,16 +19,24 @@
 //   In infinite mode the bus cycles act1 → act2 → act3 by zone index.
 
 (function () {
-  // ── Manifest. Replace null with a filename under audio/ as tracks arrive. ──
-  // Values are bare filenames; sourcesFor() below assembles the actual URLs
-  // with a relative path first and CDN fallbacks for sandbox previews that
-  // don't serve binary assets reliably.
+  // ── Manifest. Each slot is an array of filenames under audio/. ───────────
+  // A single string is also accepted (treated as a 1-track playlist) so old
+  // single-track entries keep working. null or [] = silence.
+  // sourcesFor() below assembles the actual URLs with a relative path first
+  // and CDN fallbacks for sandbox previews that don't serve binary assets.
   const TRACKS = {
-    menu: 'measured-by-the-dark.mp3',
-    act1: 'against-the-crimson-tide.mp3',
-    act2: 'contra-a-mare-vermelha.mp3',
-    act3: 'contra-a-mare-vermelha-alt.mp3',
+    menu: ['measured-by-the-dark.mp3'],
+    act1: ['against-the-crimson-tide.mp3'],
+    act2: ['contra-a-mare-vermelha.mp3'],
+    act3: ['contra-a-mare-vermelha-alt.mp3'],
   };
+
+  // Seconds of overlap when one track in a playlist ends and the next begins.
+  // The fade-out on the outgoing track is timed to finish right at its end.
+  const PLAYLIST_CROSSFADE_S = 4;
+  // Fade duration when the SLOT changes (menu → act1, etc.). Longer fades
+  // feel right between scenes; shorter ones between sibling tracks.
+  const SLOT_CROSSFADE_S = 2;
 
   // Each filename gets multiple candidate URLs and the <audio> element walks
   // them in order until one streams. Local serves come first (instant on
@@ -50,6 +61,63 @@
   let musicVolume = 0.5;
   let unlockInstalled = false;
 
+  // Per-slot playlist state. Lazily built on first request, invalidated and
+  // rebuilt if TRACKS[slot] is edited at runtime (handy for live tweaks via
+  // the dev console). `cursor` survives slot changes so revisiting `menu`
+  // continues the playlist instead of restarting it.
+  //   slot → { order: [filename], cursor: int, source: string, lastPlayed: filename|null }
+  const playlists = {};
+
+  function normalizeTracks(value) {
+    if (value == null) return [];
+    if (Array.isArray(value)) return value.filter(Boolean);
+    return [value];
+  }
+
+  function shuffleInPlace(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+    }
+    return arr;
+  }
+
+  function ensurePlaylist(slot) {
+    const files = normalizeTracks(TRACKS[slot]);
+    const sig = files.join('|');
+    let st = playlists[slot];
+    if (!st || st.source !== sig) {
+      const order = shuffleInPlace(files.slice());
+      // If the first up is the same track that just finished playing in this
+      // slot, rotate so the listener never hears the same song back-to-back.
+      const lastPlayed = st && st.lastPlayed;
+      if (order.length > 1 && order[0] === lastPlayed) {
+        order.push(order.shift());
+      }
+      st = { order, cursor: 0, source: sig, lastPlayed: lastPlayed || null };
+      playlists[slot] = st;
+    }
+    return st;
+  }
+
+  function currentFilename(slot) {
+    const st = ensurePlaylist(slot);
+    return st.order.length ? st.order[st.cursor] : null;
+  }
+
+  function advanceCursor(slot) {
+    const st = ensurePlaylist(slot);
+    if (st.order.length <= 1) return;       // single-track slot — nothing to do
+    st.lastPlayed = st.order[st.cursor];
+    st.cursor = (st.cursor + 1) % st.order.length;
+    // Completed a full pass — reshuffle for the next cycle, but keep the
+    // next-up track different from the one we just played.
+    if (st.cursor === 0 && st.order.length > 2) {
+      shuffleInPlace(st.order);
+      if (st.order[0] === st.lastPlayed) st.order.push(st.order.shift());
+    }
+  }
+
   function log(...args) {
     if (window.__AUDIO_DEBUG__) console.info('[audio]', ...args);
   }
@@ -57,7 +125,9 @@
   function getAudio(filename) {
     if (audioPool.has(filename)) return audioPool.get(filename);
     const a = document.createElement('audio');
-    a.loop = true;
+    // `loop` is set per-play by attachPlaylistHandler: true for 1-track
+    // playlists, false for multi-track (so we can crossfade to the next).
+    a.loop = false;
     a.preload = 'auto';
     a.volume = 0;
     // Add every candidate URL as a <source>; the browser drops to the next
@@ -109,13 +179,64 @@
     document.addEventListener('touchstart',  handler, { passive: true });
   }
 
+  // Wire up the timeupdate + ended handlers that drive auto-advance through
+  // a multi-track playlist. For single-track playlists we just enable native
+  // looping and skip the handlers entirely.
+  function attachPlaylistHandler(audio, slot) {
+    detachPlaylistHandler(audio);
+    const st = ensurePlaylist(slot);
+    if (st.order.length <= 1) {
+      audio.loop = true;
+      return;
+    }
+    audio.loop = false;
+    audio.__pl_slot = slot;
+    audio.__pl_advanced = false;
+
+    const tick = () => {
+      if (audio.__pl_slot !== slot || audio.__pl_advanced) return;
+      const d = audio.duration;
+      if (!d || !isFinite(d)) return;
+      if (d - audio.currentTime <= PLAYLIST_CROSSFADE_S) {
+        audio.__pl_advanced = true;
+        advanceCursor(slot);
+        if (pendingKey === slot) tryPlay();
+      }
+    };
+    const onEnded = () => {
+      if (audio.__pl_slot !== slot || audio.__pl_advanced) return;
+      audio.__pl_advanced = true;
+      advanceCursor(slot);
+      if (pendingKey === slot) tryPlay();
+    };
+    audio.__pl_tick = tick;
+    audio.__pl_onended = onEnded;
+    audio.addEventListener('timeupdate', tick);
+    audio.addEventListener('ended', onEnded);
+  }
+
+  function detachPlaylistHandler(audio) {
+    if (!audio) return;
+    if (audio.__pl_tick) {
+      audio.removeEventListener('timeupdate', audio.__pl_tick);
+      audio.__pl_tick = null;
+    }
+    if (audio.__pl_onended) {
+      audio.removeEventListener('ended', audio.__pl_onended);
+      audio.__pl_onended = null;
+    }
+    audio.__pl_slot = null;
+    audio.__pl_advanced = false;
+  }
+
   function tryPlay() {
     if (pendingKey == null) return;
-    const filename = TRACKS[pendingKey];
+    const filename = currentFilename(pendingKey);
 
-    // Slot intentionally silent — fade out whatever is playing.
+    // Slot intentionally silent (null or []) — fade out whatever is playing.
     if (!filename) {
       if (currentAudio) {
+        detachPlaylistHandler(currentAudio);
         fadeAudio(currentAudio, currentAudio.volume, 0, 1);
         currentAudio = null;
       }
@@ -131,9 +252,16 @@
       return;
     }
 
-    // Crossfade out the previous track if it's a different element.
+    // Pick the right fade duration: longer when crossing into a different
+    // slot, shorter when chaining to the next track inside the same slot.
+    const slotChange = currentKey !== pendingKey;
+    const fadeS = slotChange ? SLOT_CROSSFADE_S : PLAYLIST_CROSSFADE_S;
+
     const old = currentAudio;
-    if (old && old !== a) fadeAudio(old, old.volume, 0, 2);
+    if (old && old !== a) {
+      detachPlaylistHandler(old);
+      fadeAudio(old, old.volume, 0, fadeS);
+    }
 
     // Start at silent and play; bail to the unlock listener if autoplay refuses.
     a.volume = 0;
@@ -141,9 +269,10 @@
     try { result = a.play(); } catch (e) { result = Promise.reject(e); }
 
     const onStarted = () => {
-      fadeAudio(a, 0, musicVolume, 2);
+      fadeAudio(a, 0, musicVolume, fadeS);
       currentAudio = a;
       currentKey = pendingKey;
+      attachPlaylistHandler(a, pendingKey);
       log('playing', pendingKey, '→', a.currentSrc);
     };
 
@@ -166,6 +295,7 @@
   function stopMusic(fadeOut = 1) {
     pendingKey = null;
     if (currentAudio) {
+      detachPlaylistHandler(currentAudio);
       fadeAudio(currentAudio, currentAudio.volume, 0, fadeOut);
       currentAudio = null;
     }
@@ -338,6 +468,7 @@
   function debug() {
     const out = {
       TRACKS,
+      playlists: JSON.parse(JSON.stringify(playlists)),
       currentKey, pendingKey,
       currentAudioSrc: currentAudio ? currentAudio.currentSrc : null,
       currentAudioPaused: currentAudio ? currentAudio.paused : null,
@@ -360,7 +491,7 @@
     setMusicVolume, setSfxVolume, applySettings,
     trackKeyForChapter, trackKeyForZone,
     sfxCapture, sfxRelease, sfxBoostTurn, sfxCollapse, sfxDeath, sfxPhase,
-    TRACKS,
+    TRACKS, playlists,
     debug,
   };
 })();
