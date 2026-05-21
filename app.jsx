@@ -24,6 +24,13 @@ function App() {
   // Apply screen-label attr for QA tooling / debug
   useEffect(() => { document.body.setAttribute('data-screen', screen); }, [screen]);
 
+  // Music: out-of-game screens use the 'menu' slot. While the game runs the
+  // engine drives the track (it knows the live chapter / zone).
+  useEffect(() => {
+    if (!window.AudioBus) return;
+    if (screen !== 'game') window.AudioBus.playTrack('menu');
+  }, [screen]);
+
   // ── Navigation ──────────────────────────────────────────────────────────
   const goMenu     = useCallback(() => { setPaused(false); setScreen('menu'); }, []);
   const goMap      = useCallback(() => setScreen('map'), []);

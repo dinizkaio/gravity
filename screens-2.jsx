@@ -358,7 +358,14 @@ function SettingsScreen({ onBack }) {
 
   function refresh() { force(n => n + 1); }
   function changeLocale(loc) { window.setLocale(loc); refresh(); }
-  function update(k, v) { window.setSettings({ [k]: v }); refresh(); }
+  function update(k, v) {
+    window.setSettings({ [k]: v });
+    if (window.AudioBus) {
+      if (k === 'sound') window.AudioBus.setSfxVolume(v);
+      if (k === 'music') window.AudioBus.setMusicVolume(v);
+    }
+    refresh();
+  }
   function doReset() {
     window.resetProgress();
     setConfirm(false);

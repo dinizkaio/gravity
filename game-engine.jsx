@@ -35,6 +35,18 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
   const [, setLocaleTick] = useState(0);
   useEffect(() => window.onLocaleChange(() => setLocaleTick(n => n + 1)), []);
 
+  // Music: pick the right slot for the spark's current location and crossfade
+  // to it. In chapter mode this fires once on mount and again whenever the
+  // spark crosses into a new chapter band; in infinite mode it fires when
+  // the zone banner trips.
+  useEffect(() => {
+    if (!window.AudioBus) return;
+    const key = (mode === 'infinite')
+      ? window.AudioBus.trackKeyForZone(window.INFINITE_ZONES.findIndex(z => z.key === zoneKey))
+      : window.AudioBus.trackKeyForChapter(liveChapterId);
+    window.AudioBus.playTrack(key);
+  }, [mode, liveChapterId, zoneKey]);
+
   const isInfinite = mode === 'infinite';
 
   useEffect(() => {
@@ -278,6 +290,8 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
       const newTarget = a.y + 280;
       if (newTarget < regressionTargetY) regressionTargetY = newTarget;
       regressionRevealed = true;
+
+      if (window.AudioBus) window.AudioBus.sfxCapture();
     }
 
     function releaseOrbit() {
@@ -298,12 +312,18 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
       orbitAnchor = null;
       orbitTurns = 0;
       orbitTurnAccumulator = 0;
+
+      if (window.AudioBus) window.AudioBus.sfxRelease(speed);
     }
 
     let deathTimeoutId = 0;
     function die(reasonKey) {
       if (!alive) return;
       alive = false;
+      if (window.AudioBus) {
+        if (reasonKey === 'collapse') window.AudioBus.sfxCollapse();
+        window.AudioBus.sfxDeath();
+      }
       for (let i = 0; i < 50; i++) {
         particles.push({
           x: player.x, y: player.y,
@@ -362,6 +382,7 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
                 life: 0.7, max: 0.7, color: k % 3 === 0 ? '#fff' : '#f4b860'
               });
             }
+            if (window.AudioBus) window.AudioBus.sfxBoostTurn(orbitTurns);
           }
         }
 
@@ -465,6 +486,7 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
           const k = now;
           setPhaseBanner({ chapterId: liveCap.id, complete: false, key: k });
           setTimeout(() => setPhaseBanner(b => (b && b.key === k ? null : b)), 2800);
+          if (window.AudioBus) window.AudioBus.sfxPhase();
         }
 
         // Cosmetic sub-phase counter — split the current chapter into
@@ -555,6 +577,7 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
           setZoneKey(ZONES[zIdx].key);
           setZoneJustChanged(true);
           setTimeout(() => setZoneJustChanged(false), 3200);
+          if (window.AudioBus) window.AudioBus.sfxPhase();
         }
       }
     }
