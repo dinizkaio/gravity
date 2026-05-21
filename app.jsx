@@ -63,8 +63,11 @@ function App() {
 
   const restartRun = useCallback(() => {
     setPaused(false);
+    // Match retry semantics: if the player crossed into a later chapter
+    // before pausing, restart should reopen there, not back at the start.
+    if (mode === 'chapter') setChapter(window.currentChapter());
     setRunKey(k => k + 1);  // force GameCanvas remount cleanly
-  }, []);
+  }, [mode]);
 
   const quitToMap = useCallback(() => {
     setPaused(false);
@@ -118,7 +121,9 @@ function App() {
           />
           {paused && (
             <window.PauseOverlay
-              chapter={chapter || { roman: '∞', name: window.t('menu.infinite') }}
+              chapter={mode === 'infinite'
+                ? { roman: '∞', name: window.t('menu.infinite') }
+                : window.currentChapter()}
               onResume={goResume}
               onRestart={restartRun}
               onQuit={quitToMap}
@@ -129,13 +134,15 @@ function App() {
 
       {screen === 'gameover' && (
         <window.GameOver
-          chapter={chapter || window.CHAPTERS[0]}
+          chapter={mode === 'infinite' ? null : window.currentChapter()}
           mode={mode}
           score={lastRun.score}
           distance={lastRun.distance}
           isNewBest={lastRun.isNewBest}
           reason={lastRun.reason}
-          onRetry={() => mode === 'infinite' ? goInfinite() : goPlay(chapter)}
+          // If the spark crossed into a new chapter before dying, retry resumes
+          // from the highest one reached (currentChapter reads the latest unlock).
+          onRetry={() => mode === 'infinite' ? goInfinite() : goPlay(window.currentChapter())}
           onMap={() => setScreen(mode === 'infinite' ? 'menu' : 'map')}
         />
       )}

@@ -395,7 +395,6 @@ function ChapterMap({ onBack, onPlay, onBoss }) {
 function ChapterDetail({ chapter, onPlay, onBoss }) {
   const state = window.chapterState(chapter);
   const locked = state === 'sealed';
-  const current = state === 'current';
   const c = chapter;
   return (
     <div key={c.id} className="fade-in" style={{ animation: 'fadeIn 0.6s ease-out both' }}>
@@ -468,7 +467,11 @@ function ChapterDetail({ chapter, onPlay, onBoss }) {
       {!locked && (
         <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
           <button className="btn-ghost primary" onClick={onPlay}>
-            ▸ {current ? window.t('map.action_continue') : window.t('map.action_begin')}
+            ▸ {state === 'current'
+                ? window.t('map.action_continue')
+                : state === 'completed'
+                  ? window.t('map.action_replay')
+                  : window.t('map.action_begin')}
           </button>
         </div>
       )}
