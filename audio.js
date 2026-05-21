@@ -16,13 +16,31 @@
 //   In infinite mode the bus cycles act1 → act2 → act3 by zone index.
 
 (function () {
-  // ── Manifest. Replace null with a file path under audio/ as tracks arrive. ──
+  // ── Manifest. Replace null with a filename under audio/ as tracks arrive. ──
+  // Values are bare filenames; sourcesFor() below assembles the actual URLs
+  // with a relative path first and CDN fallbacks for sandbox previews that
+  // don't serve binary assets reliably.
   const TRACKS = {
-    menu: 'audio/measured-by-the-dark.mp3',
-    act1: 'audio/against-the-crimson-tide.mp3',
-    act2: 'audio/contra-a-mare-vermelha.mp3',
-    act3: 'audio/contra-a-mare-vermelha-alt.mp3',
+    menu: 'measured-by-the-dark.mp3',
+    act1: 'against-the-crimson-tide.mp3',
+    act2: 'contra-a-mare-vermelha.mp3',
+    act3: 'contra-a-mare-vermelha-alt.mp3',
   };
+
+  // Each filename gets multiple candidate URLs and the <audio> element walks
+  // them in order until one streams. Local serves come first (instant on
+  // GitHub Pages / localhost / any static host). The jsdelivr CDN backstop
+  // covers preview sandboxes whose servers drop binary requests with
+  // ERR_EMPTY_RESPONSE — both @main (the canonical post-merge URL) and the
+  // current branch (so the very PR that adds this fallback can be tested
+  // before being merged).
+  const CDN_PREFIXES = [
+    'https://cdn.jsdelivr.net/gh/dinizkaio/gravity@main/audio/',
+    'https://cdn.jsdelivr.net/gh/dinizkaio/gravity@claude/review-gravity-game-hJ9WJ/audio/',
+  ];
+  function sourcesFor(filename) {
+    return ['audio/' + filename, ...CDN_PREFIXES.map(p => p + filename)];
+  }
 
   // ── Music (HTML5 <audio>) ────────────────────────────────────────────────
   const audioPool = new Map();   // url → HTMLAudioElement (reused on revisits)
@@ -36,19 +54,27 @@
     if (window.__AUDIO_DEBUG__) console.info('[audio]', ...args);
   }
 
-  function getAudio(url) {
-    if (audioPool.has(url)) return audioPool.get(url);
-    const a = new Audio(url);
+  function getAudio(filename) {
+    if (audioPool.has(filename)) return audioPool.get(filename);
+    const a = document.createElement('audio');
     a.loop = true;
     a.preload = 'auto';
     a.volume = 0;
+    // Add every candidate URL as a <source>; the browser drops to the next
+    // one on network or decode failure.
+    for (const src of sourcesFor(filename)) {
+      const s = document.createElement('source');
+      s.src = src; s.type = 'audio/mpeg';
+      a.appendChild(s);
+    }
     a.addEventListener('error', () => {
       const err = a.error;
-      console.warn('[audio] element error for', url, err && err.code, err && err.message);
+      console.warn('[audio] all sources exhausted for', filename, err && err.code, err && err.message);
     });
-    a.addEventListener('stalled', () => log('stalled', url));
-    a.addEventListener('canplay',  () => log('canplay', url));
-    audioPool.set(url, a);
+    a.addEventListener('stalled', () => log('stalled', filename));
+    a.addEventListener('canplay',  () => log('canplay', filename, '→', a.currentSrc));
+    a.load();  // process the source list
+    audioPool.set(filename, a);
     return a;
   }
 
@@ -85,10 +111,10 @@
 
   function tryPlay() {
     if (pendingKey == null) return;
-    const url = TRACKS[pendingKey];
+    const filename = TRACKS[pendingKey];
 
     // Slot intentionally silent — fade out whatever is playing.
-    if (!url) {
+    if (!filename) {
       if (currentAudio) {
         fadeAudio(currentAudio, currentAudio.volume, 0, 1);
         currentAudio = null;
@@ -97,7 +123,7 @@
       return;
     }
 
-    const a = getAudio(url);
+    const a = getAudio(filename);
 
     // Already this track and audibly playing — nothing to do.
     if (a === currentAudio && !a.paused && a.volume > 0.001) {
@@ -118,7 +144,7 @@
       fadeAudio(a, 0, musicVolume, 2);
       currentAudio = a;
       currentKey = pendingKey;
-      log('playing', pendingKey, url);
+      log('playing', pendingKey, '→', a.currentSrc);
     };
 
     if (result && typeof result.then === 'function') {
