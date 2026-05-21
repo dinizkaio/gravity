@@ -19,6 +19,7 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
   const [isHolding, setIsHolding] = useState(false);
   const [zoneKey, setZoneKey] = useState('');
   const [zoneJustChanged, setZoneJustChanged] = useState(false);
+  const [phaseBanner, setPhaseBanner] = useState(null);  // { level, total, complete } | null
 
   // Keep latest paused flag readable inside the rAF closure without re-running the engine effect
   const pausedRef = useRef(!!paused);
@@ -87,6 +88,21 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
     let regressionTargetY = startingY + 220;
     let regressionRevealed = false;
 
+    // Per-orbit acceleration tracking. Each completed loop around an anchor
+    // multiplies omega by ORBIT_BOOST_PER_TURN (player gains tangential speed).
+    // After ORBIT_TURNS_CAP loops the radius starts shrinking — if it crosses
+    // the anchor surface the orbit collapses and the player dies.
+    const ORBIT_BOOST_PER_TURN = 1.18;
+    const ORBIT_TURNS_CAP = 4;
+    const ORBIT_DECAY_RATE = 70;        // pixels of radius lost per second after the cap
+    let orbitTurns = 0;
+    let orbitTurnAccumulator = 0;       // fractional turns; flushed on every full loop
+
+    // Phase tracking (chapter mode). One phase per LEVEL_DISTANCE_M of altitude.
+    const LEVEL_M = window.LEVEL_DISTANCE_M;
+    let currentPhase = 0;               // 1-based once the player crosses the first threshold
+    let chapterCompleteShown = false;
+
     function rand(a, b) { return a + Math.random() * (b - a); }
     function chance(p) { return Math.random() < p; }
     function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
@@ -97,7 +113,10 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
         const km = meters / 1000;
         return Math.min(9, 1 + Math.floor(km * 2));
       }
-      return chapterId;
+      // Chapter mode: base = chapterId, ramps up over the chapter (max +2 by the last phase)
+      const total = chapter ? chapter.levels : 12;
+      const phaseFactor = Math.min(1, currentPhase / total);
+      return Math.min(9, chapterId + Math.floor(phaseFactor * 2.5));
     }
 
     function anchorType() {
@@ -227,6 +246,9 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
       orbitOmega = (Math.max(speed, 180) / orbitRadius) * orbitDir;
       orbitOmega *= 1 + (a.mass / 100000);
 
+      orbitTurns = 0;
+      orbitTurnAccumulator = 0;
+
       const newTarget = a.y + 280;
       if (newTarget < regressionTargetY) regressionTargetY = newTarget;
       regressionRevealed = true;
@@ -248,6 +270,8 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
         });
       }
       orbitAnchor = null;
+      orbitTurns = 0;
+      orbitTurnAccumulator = 0;
     }
 
     let deathTimeoutId = 0;
@@ -290,7 +314,47 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
         const massMod = orbitAnchor.type === 'pulsar'
           ? 1 + 0.3 * Math.sin(now / 600 + orbitAnchor.phase)
           : 1;
-        orbitAngle += orbitOmega * dt * massMod;
+        const deltaAngle = orbitOmega * dt * massMod;
+        orbitAngle += deltaAngle;
+
+        // Count full loops; each one within the cap boosts omega and showers sparks.
+        orbitTurnAccumulator += Math.abs(deltaAngle) / (Math.PI * 2);
+        while (orbitTurnAccumulator >= 1) {
+          orbitTurnAccumulator -= 1;
+          orbitTurns += 1;
+          if (orbitTurns <= ORBIT_TURNS_CAP) {
+            orbitOmega *= ORBIT_BOOST_PER_TURN;
+            scoreVal += 8;
+            setScore(scoreVal);
+            for (let k = 0; k < 12; k++) {
+              const ang = Math.random() * Math.PI * 2;
+              particles.push({
+                x: player.x, y: player.y,
+                vx: Math.cos(ang) * rand(40, 110), vy: Math.sin(ang) * rand(40, 110),
+                life: 0.7, max: 0.7, color: k % 3 === 0 ? '#fff' : '#f4b860'
+              });
+            }
+          }
+        }
+
+        // Past the cap the orbit decays — stay too long and you collide with the anchor.
+        if (orbitTurns > ORBIT_TURNS_CAP) {
+          orbitRadius -= ORBIT_DECAY_RATE * dt;
+          if (Math.random() < 0.35) {
+            const wx = orbitAnchor.x + Math.cos(orbitAngle) * orbitRadius;
+            const wy = orbitAnchor.y + Math.sin(orbitAngle) * orbitRadius;
+            particles.push({
+              x: wx, y: wy,
+              vx: rand(-40, 40), vy: rand(-40, 40),
+              life: 0.5, max: 0.5, color: '#d04060'
+            });
+          }
+          if (orbitRadius < orbitAnchor.r + 8) {
+            die('collapse');
+            return;
+          }
+        }
+
         player.x = orbitAnchor.x + Math.cos(orbitAngle) * orbitRadius;
         player.y = orbitAnchor.y + Math.sin(orbitAngle) * orbitRadius;
         const tx = -Math.sin(orbitAngle) * orbitDir;
@@ -351,6 +415,23 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
         scoreVal += (d - lastAltitude);
         setScore(scoreVal);
         lastAltitude = d;
+      }
+
+      // Phase tracking (chapter mode) — every LEVEL_M of altitude bumps the phase.
+      // Shows a banner on phase change; a second one when the chapter wraps up.
+      if (!isInfinite && chapter) {
+        const newPhase = Math.floor(d / LEVEL_M) + (d > 0 ? 1 : 0);
+        const total = chapter.levels;
+        if (newPhase > currentPhase && newPhase <= total) {
+          currentPhase = newPhase;
+          setPhaseBanner({ level: newPhase, total, complete: false, key: now });
+          setTimeout(() => setPhaseBanner(b => (b && b.key === now ? null : b)), 2600);
+        } else if (newPhase > total && !chapterCompleteShown) {
+          chapterCompleteShown = true;
+          currentPhase = total;
+          setPhaseBanner({ level: total, total, complete: true, key: now });
+          setTimeout(() => setPhaseBanner(b => (b && b.key === now ? null : b)), 3000);
+        }
       }
 
       // Regression line animation
@@ -896,6 +977,20 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
           <div className="label" style={{ marginBottom: 6, color: 'var(--amber-glow)' }}>— {window.t('hud.entering')} —</div>
           <div className="serif" style={{ fontSize: 36, letterSpacing: '0.16em', color: 'var(--bone)' }}>
             {window.t(`zones.${zoneKey}`)}
+          </div>
+        </div>
+      )}
+
+      {/* Phase / chapter-complete banner (chapter mode) */}
+      {!isInfinite && phaseBanner && (
+        <div key={phaseBanner.key} className="zone-banner">
+          <div className="label" style={{ marginBottom: 6, color: phaseBanner.complete ? 'var(--amber-glow)' : 'var(--bone-faint)' }}>
+            — {phaseBanner.complete ? window.t('hud.chapter_complete') : window.t('hud.phase_label')} —
+          </div>
+          <div className="serif" style={{ fontSize: 36, letterSpacing: '0.16em', color: 'var(--bone)' }}>
+            {phaseBanner.complete
+              ? (chapter ? window.t(`chapters.${chapter.id}.name`) : '')
+              : window.t('hud.phase_n', { n: phaseBanner.level, total: phaseBanner.total })}
           </div>
         </div>
       )}

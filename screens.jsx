@@ -151,26 +151,18 @@ function IntroScreen({ onContinue }) {
         <div className="label">— {window.t('intro.label')} —</div>
       </div>
 
-      {/* Narrative */}
-      <div style={{
-        position: 'absolute',
-        left: '50%', top: '50%', transform: 'translate(-50%, -50%)',
-        textAlign: 'center', width: 800, maxWidth: '85%',
-        zIndex: 10
-      }}>
+      {/* Narrative — sits inside a top/bottom-anchored flex column so the text never
+          overflows under the Continue button on small screens. */}
+      <div className="intro-narrative">
         {lines.slice(0, step + 1).map((line, i) => {
           const isItalic = typeof line === 'string' && line.startsWith('*');
           const display = isItalic ? line.slice(1) : line;
           const isEmpty = display === '';
           return (
             <div key={i}
-                 className="serif"
+                 className={`serif intro-line${isEmpty ? ' empty' : ''}`}
                  style={{
-                   fontSize: isEmpty ? 0 : 22,
-                   marginBottom: isEmpty ? 28 : 12,
                    color: i === step ? 'var(--bone)' : 'var(--bone-faint)',
-                   lineHeight: 1.5,
-                   letterSpacing: '0.04em',
                    animation: 'fadeInLetter 1.6s cubic-bezier(0.22, 1, 0.36, 1) both',
                    fontStyle: isItalic ? 'italic' : 'normal'
                  }}>
