@@ -522,8 +522,62 @@ function darken(hex, amt) {
   return `rgb(${r|0},${g|0},${b|0})`;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// CREDITS — End-credits screen. Music slot is 'credits' (track 14 still
+// in production); reached from the main menu while we wait for an
+// automatic post-chapter-9 trigger to land.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function CreditsScreen({ onBack }) {
+  const rows = [
+    { label: window.t('credits.game_label'),   value: window.t('credits.game_value') },
+    { label: window.t('credits.music_label'),  value: window.t('credits.music_value') },
+    { label: window.t('credits.assist_label'), value: window.t('credits.assist_value') },
+  ];
+
+  return (
+    <div className="stage" style={{ background: '#02030a' }}>
+      <window.AmbientBackground intensity={0.6} />
+      <div className="letterbox top" />
+      <div className="letterbox bottom" />
+
+      <div style={{ position: 'absolute', top: 80, left: 48, right: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 }}>
+        <button className="btn-text" onClick={onBack}>← {window.t('nav.back')}</button>
+        <div className="label">— {window.t('credits.label')} —</div>
+        <div style={{ width: 80 }} />
+      </div>
+
+      <div className="abs-center fade-in-up" style={{ textAlign: 'center', zIndex: 10, width: '90%', maxWidth: 640 }}>
+        <h1 className="title-hero glow-bone" style={{ marginBottom: 12 }}>{window.t('game.name')}</h1>
+        <div className="serif-i" style={{ fontSize: 18, color: 'var(--bone-dim)', marginBottom: 56 }}>
+          {window.t('credits.subtitle')}
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 28, marginBottom: 56 }}>
+          {rows.map((r, i) => (
+            <div key={i}>
+              <div className="label" style={{ marginBottom: 6 }}>— {r.label} —</div>
+              <div className="serif" style={{ fontSize: 22, color: 'var(--bone)', letterSpacing: '0.04em' }}>
+                {r.value}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="serif-i" style={{ fontSize: 18, color: 'var(--amber-glow)', letterSpacing: '0.03em' }}>
+          {window.t('credits.thanks')}
+        </div>
+      </div>
+
+      <div className="vignette" />
+      <div className="grain" />
+    </div>
+  );
+}
+
 window.BossIntro      = BossIntro;
 window.PauseOverlay   = PauseOverlay;
 window.GameOver       = GameOver;
 window.Bestiary       = Bestiary;
 window.SettingsScreen = SettingsScreen;
+window.CreditsScreen  = CreditsScreen;
