@@ -14,9 +14,11 @@ fall back to their act bucket so the music never goes silent.
 | Slot   | Used in                                                                 | Currently                       |
 |--------|-------------------------------------------------------------------------|---------------------------------|
 | `menu` | intro, main menu, map, bestiary, settings, boss intro, game over        | measured-by-the-dark.mp3        |
-| `act1` | chapter mode chapters 1, 3 (Awakening / Tides of Jupiter)               | against-the-crimson-tide.mp3    |
+| `act1` | chapter mode chapter 1 (Awakening)                                      | against-the-crimson-tide.mp3    |
 | `ch2`  | chapter mode chapter 2 (Broken Belt — pulsars)                          | timing-the-blink.mp3            |
-| `act2` | chapter mode chapters 4–6 (Wanderers / Threshold / Sea of Shadows)      | contra-a-mare-vermelha.mp3      |
+| `ch3`  | chapter mode chapter 3 (Tides of Jupiter — comets)                      | punto-de-fuga.mp3               |
+| `ch4`  | chapter mode chapter 4 (Wanderers — black holes)                        | where-the-weight-settles.mp3    |
+| `act2` | chapter mode chapters 5–6 (Threshold / Sea of Shadows)                  | contra-a-mare-vermelha.mp3      |
 | `act3` | chapter mode chapters 7–9 (Eye of the Abyss / Tesseract / Aurora)       | contra-a-mare-vermelha-alt.mp3  |
 
 In **infinite mode** the bus cycles `act1 → act2 → act3` by zone index, so

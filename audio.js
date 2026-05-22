@@ -28,6 +28,8 @@
     menu: ['measured-by-the-dark.mp3'],
     act1: ['against-the-crimson-tide.mp3'],
     ch2:  ['timing-the-blink.mp3'],
+    ch3:  ['punto-de-fuga.mp3'],
+    ch4:  ['where-the-weight-settles.mp3'],
     act2: ['contra-a-mare-vermelha.mp3'],
     act3: ['contra-a-mare-vermelha-alt.mp3'],
   };
@@ -351,6 +353,8 @@
   // its act bucket so the gap is never silent during the migration.
   function trackKeyForChapter(id) {
     if (id === 2) return 'ch2';
+    if (id === 3) return 'ch3';
+    if (id === 4) return 'ch4';
     if (!id || id <= 3) return 'act1';
     if (id <= 6) return 'act2';
     return 'act3';
