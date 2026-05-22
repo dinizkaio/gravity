@@ -12,14 +12,15 @@
 // if the player leaves and returns to the same slot. A null/empty slot
 // fades out and stays silent.
 //
-//   menu     : main menu, map, bestiary, settings, boss intro
-//   prologue : opening narrative ("Antes do silêncio, havia luz...")
-//   gameover : death screen
-//   credits  : end credits (plays via AudioBus.playTrack('credits'))
-//   act1     : chapter mode chapter 1 (Awakening)
-//   ch2…ch8  : chapter mode chapters 2–8 (one slot per chapter)
-//   act3     : chapter mode chapter 9 + last-zone infinite (until split)
-//   In infinite mode the bus cycles act1 → act2 → act3 by zone index.
+//   menu           : main menu, map, bestiary, settings, boss intro
+//   prologue       : opening narrative ("Antes do silêncio, havia luz...")
+//   gameover       : death screen
+//   credits        : end credits (plays via AudioBus.playTrack('credits'))
+//   act1           : chapter mode chapter 1 (Awakening)
+//   ch2…ch8        : chapter mode chapters 2–8 (one slot per chapter)
+//   act3           : chapter mode chapter 9 (until track 13 lands)
+//   infinite-early : infinite mode, zones 0–3 (lighter palettes)
+//   infinite-late  : infinite mode, zones 4–7 (denser palettes)
 
 (function () {
   // ── Manifest. Each slot is an array of filenames under audio/. ───────────
@@ -40,8 +41,9 @@
     ch6:  ['danza-fatal.mp3'],
     ch7:  ['kinetic-burn.mp3'],
     ch8:  ['limite-cero.mp3'],
-    act2: ['contra-a-mare-vermelha.mp3'],
     act3: ['contra-a-mare-vermelha-alt.mp3'],
+    'infinite-early': ['contra-a-mare-vermelha.mp3'],
+    'infinite-late':  ['mare-sem-peso.mp3'],
   };
 
   // Seconds of overlap when one track in a playlist ends and the next begins.
@@ -372,9 +374,13 @@
     if (!id || id <= 3) return 'act1';
     return 'act3';
   }
+  // Infinite mode has 8 zones (see INFINITE_ZONES in data.js). The first
+  // half (blue void → emerald sea, lighter palettes) gets the early track;
+  // the second half (crimson twilight → aurora, denser palettes) gets the
+  // late one, matching the climb in visual intensity.
   function trackKeyForZone(zoneIndex) {
     const i = Math.max(0, zoneIndex | 0);
-    return ['act1', 'act2', 'act3'][i % 3];
+    return i < 4 ? 'infinite-early' : 'infinite-late';
   }
 
   // SFX helpers ──────────────────────────────────────────────────────────────
