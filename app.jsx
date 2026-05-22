@@ -10,7 +10,7 @@
 const { useState, useEffect, useCallback } = React;
 
 function App() {
-  const [screen, setScreen] = useState('intro');     // intro|menu|map|boss|game|gameover|bestiary|settings
+  const [screen, setScreen] = useState('intro');     // intro|menu|map|boss|game|gameover|bestiary|settings|credits
   const [chapter, setChapter] = useState(null);
   const [mode, setMode] = useState('chapter');       // 'chapter' | 'infinite'
   const [paused, setPaused] = useState(false);
@@ -24,11 +24,15 @@ function App() {
   // Apply screen-label attr for QA tooling / debug
   useEffect(() => { document.body.setAttribute('data-screen', screen); }, [screen]);
 
-  // Music: out-of-game screens use the 'menu' slot. While the game runs the
-  // engine drives the track (it knows the live chapter / zone).
+  // Music: the game-over and credits screens have their own slots; every
+  // other out-of-game screen uses the 'menu' slot. While the game runs the
+  // engine drives the track (it knows the live chapter/zone).
   useEffect(() => {
     if (!window.AudioBus) return;
-    if (screen !== 'game') window.AudioBus.playTrack('menu');
+    if (screen === 'game') return;
+    if (screen === 'gameover')     window.AudioBus.playTrack('gameover');
+    else if (screen === 'credits') window.AudioBus.playTrack('credits');
+    else                           window.AudioBus.playTrack('menu');
   }, [screen]);
 
   // ── Navigation ──────────────────────────────────────────────────────────
@@ -36,6 +40,7 @@ function App() {
   const goMap      = useCallback(() => setScreen('map'), []);
   const goBestiary = useCallback(() => setScreen('bestiary'), []);
   const goSettings = useCallback(() => setScreen('settings'), []);
+  const goCredits  = useCallback(() => setScreen('credits'), []);
 
   const goPlay = useCallback((ch) => {
     setMode('chapter');
@@ -104,6 +109,7 @@ function App() {
           onJourney={goMap}
           onBestiary={goBestiary}
           onSettings={goSettings}
+          onCredits={goCredits}
           hasSave={hasSave}
         />
       )}
@@ -170,8 +176,12 @@ function App() {
         <window.SettingsScreen onBack={goMenu} />
       )}
 
-      {/* Persistent top-center nav (hidden during gameplay, intro, gameover) */}
-      {!['game', 'intro', 'gameover'].includes(screen) && (
+      {screen === 'credits' && (
+        <window.CreditsScreen onBack={goMenu} />
+      )}
+
+      {/* Persistent top-center nav (hidden during gameplay, intro, gameover, credits) */}
+      {!['game', 'intro', 'gameover', 'credits'].includes(screen) && (
         <NavHint screen={screen} onMenu={goMenu} onMap={goMap} onBestiary={goBestiary} />
       )}
     </>

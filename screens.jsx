@@ -205,7 +205,7 @@ function IntroScreen({ onContinue }) {
 // MAIN MENU
 // ─────────────────────────────────────────────────────────────────────────────
 
-function MainMenu({ onPlay, onInfinite, onJourney, onBestiary, onSettings, hasSave }) {
+function MainMenu({ onPlay, onInfinite, onJourney, onBestiary, onSettings, onCredits, hasSave }) {
   const best = window.getBestScore();
   return (
     <div className="stage">
@@ -262,6 +262,7 @@ function MainMenu({ onPlay, onInfinite, onJourney, onBestiary, onSettings, hasSa
           <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
             <button className="btn-ghost" onClick={onJourney} style={{ padding: '10px 18px', fontSize: 10 }}>· {window.t('nav.map')} ·</button>
             <button className="btn-ghost" onClick={onBestiary} style={{ padding: '10px 18px', fontSize: 10 }}>· {window.t('nav.bestiary')} ·</button>
+            <button className="btn-ghost" onClick={onCredits} style={{ padding: '10px 18px', fontSize: 10 }}>· {window.t('nav.credits')} ·</button>
           </div>
         </div>
       </div>
