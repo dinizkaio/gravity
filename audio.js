@@ -30,6 +30,7 @@
     ch2:  ['timing-the-blink.mp3'],
     ch3:  ['punto-de-fuga.mp3'],
     ch4:  ['where-the-weight-settles.mp3'],
+    ch5:  ['the-phantom-sign.mp3'],
     act2: ['contra-a-mare-vermelha.mp3'],
     act3: ['contra-a-mare-vermelha-alt.mp3'],
   };
@@ -355,6 +356,7 @@
     if (id === 2) return 'ch2';
     if (id === 3) return 'ch3';
     if (id === 4) return 'ch4';
+    if (id === 5) return 'ch5';
     if (!id || id <= 3) return 'act1';
     if (id <= 6) return 'act2';
     return 'act3';
