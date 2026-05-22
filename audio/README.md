@@ -11,19 +11,22 @@ The bus is migrating from 3 act-buckets to one slot per chapter as the
 14-track soundtrack lands. Chapters that don't have a dedicated track yet
 fall back to their act bucket so the music never goes silent.
 
-| Slot   | Used in                                                                 | Currently                       |
-|--------|-------------------------------------------------------------------------|---------------------------------|
-| `menu` | intro, main menu, map, bestiary, settings, boss intro, game over        | measured-by-the-dark.mp3        |
-| `act1` | chapter mode chapter 1 (Awakening)                                      | against-the-crimson-tide.mp3    |
-| `ch2`  | chapter mode chapter 2 (Broken Belt — pulsars)                          | timing-the-blink.mp3            |
-| `ch3`  | chapter mode chapter 3 (Tides of Jupiter — comets)                      | punto-de-fuga.mp3               |
-| `ch4`  | chapter mode chapter 4 (Wanderers — black holes)                        | where-the-weight-settles.mp3    |
-| `ch5`  | chapter mode chapter 5 (Threshold — radiation)                          | the-phantom-sign.mp3            |
-| `ch6`  | chapter mode chapter 6 (Sea of Shadows — asteroids)                     | danza-fatal.mp3                 |
-| `ch7`  | chapter mode chapter 7 (Eye of the Abyss — binary pulsars)              | kinetic-burn.mp3                |
-| `ch8`  | chapter mode chapter 8 (Tesseract — threshold of the red tide)          | limite-cero.mp3                 |
-| `act2` | infinite mode (until `infinite-early` lands)                            | contra-a-mare-vermelha.mp3      |
-| `act3` | chapter mode chapter 9 (Aurora) + infinite (last zones)                 | contra-a-mare-vermelha-alt.mp3  |
+| Slot       | Used in                                                                 | Currently                       |
+|------------|-------------------------------------------------------------------------|---------------------------------|
+| `menu`     | main menu, map, bestiary, settings, boss intro                          | measured-by-the-dark.mp3        |
+| `prologue` | opening narrative ("Antes do silêncio, havia luz…")                     | a-curva-da-espera.mp3           |
+| `gameover` | death screen                                                            | a-curva-da-espera.mp3           |
+| `credits`  | end credits (no trigger yet — call `AudioBus.playTrack('credits')`)      | a-curva-da-espera.mp3           |
+| `act1`     | chapter mode chapter 1 (Awakening)                                      | against-the-crimson-tide.mp3    |
+| `ch2`      | chapter mode chapter 2 (Broken Belt — pulsars)                          | timing-the-blink.mp3            |
+| `ch3`      | chapter mode chapter 3 (Tides of Jupiter — comets)                      | punto-de-fuga.mp3               |
+| `ch4`      | chapter mode chapter 4 (Wanderers — black holes)                        | where-the-weight-settles.mp3    |
+| `ch5`      | chapter mode chapter 5 (Threshold — radiation)                          | the-phantom-sign.mp3            |
+| `ch6`      | chapter mode chapter 6 (Sea of Shadows — asteroids)                     | danza-fatal.mp3                 |
+| `ch7`      | chapter mode chapter 7 (Eye of the Abyss — binary pulsars)              | kinetic-burn.mp3                |
+| `ch8`      | chapter mode chapter 8 (Tesseract — threshold of the red tide)          | limite-cero.mp3                 |
+| `act2`     | infinite mode (until `infinite-early` lands)                            | contra-a-mare-vermelha.mp3      |
+| `act3`     | chapter mode chapter 9 (Aurora) + infinite (last zones)                 | contra-a-mare-vermelha-alt.mp3  |
 
 In **infinite mode** the bus cycles `act1 → act2 → act3` by zone index, so
 filling those slots also colours the endless run.

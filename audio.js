@@ -12,10 +12,13 @@
 // if the player leaves and returns to the same slot. A null/empty slot
 // fades out and stays silent.
 //
-//   menu : intro, main menu, map, bestiary, settings, boss intro, game over
-//   act1 : chapter mode chapters 1–3 (Awakening / Broken Belt / Tides of Jupiter)
-//   act2 : chapter mode chapters 4–6 (Wanderers / Threshold / Sea of Shadows)
-//   act3 : chapter mode chapters 7–9 (Eye of the Abyss / Tesseract / Aurora)
+//   menu     : main menu, map, bestiary, settings, boss intro
+//   prologue : opening narrative ("Antes do silêncio, havia luz...")
+//   gameover : death screen
+//   credits  : end credits (plays via AudioBus.playTrack('credits'))
+//   act1     : chapter mode chapter 1 (Awakening)
+//   ch2…ch8  : chapter mode chapters 2–8 (one slot per chapter)
+//   act3     : chapter mode chapter 9 + last-zone infinite (until split)
 //   In infinite mode the bus cycles act1 → act2 → act3 by zone index.
 
 (function () {
@@ -25,7 +28,10 @@
   // sourcesFor() below assembles the actual URLs with a relative path first
   // and CDN fallbacks for sandbox previews that don't serve binary assets.
   const TRACKS = {
-    menu: ['measured-by-the-dark.mp3'],
+    menu:     ['measured-by-the-dark.mp3'],
+    prologue: ['a-curva-da-espera.mp3'],
+    gameover: ['a-curva-da-espera.mp3'],
+    credits:  ['a-curva-da-espera.mp3'],
     act1: ['against-the-crimson-tide.mp3'],
     ch2:  ['timing-the-blink.mp3'],
     ch3:  ['punto-de-fuga.mp3'],

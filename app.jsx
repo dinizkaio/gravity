@@ -24,11 +24,15 @@ function App() {
   // Apply screen-label attr for QA tooling / debug
   useEffect(() => { document.body.setAttribute('data-screen', screen); }, [screen]);
 
-  // Music: out-of-game screens use the 'menu' slot. While the game runs the
-  // engine drives the track (it knows the live chapter / zone).
+  // Music: the prologue and game-over screens have their own contemplative
+  // slots; every other out-of-game screen uses the 'menu' slot. While the
+  // game runs the engine drives the track (it knows the live chapter/zone).
   useEffect(() => {
     if (!window.AudioBus) return;
-    if (screen !== 'game') window.AudioBus.playTrack('menu');
+    if (screen === 'game') return;
+    if (screen === 'intro')         window.AudioBus.playTrack('prologue');
+    else if (screen === 'gameover') window.AudioBus.playTrack('gameover');
+    else                            window.AudioBus.playTrack('menu');
   }, [screen]);
 
   // ── Navigation ──────────────────────────────────────────────────────────
