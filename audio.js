@@ -12,10 +12,9 @@
 // if the player leaves and returns to the same slot. A null/empty slot
 // fades out and stays silent.
 //
-//   menu           : main menu, map, bestiary, settings, boss intro
-//   prologue       : opening narrative ("Antes do silêncio, havia luz...")
+//   menu           : intro, main menu, map, bestiary, settings, boss intro
 //   gameover       : death screen
-//   credits        : end credits (plays via AudioBus.playTrack('credits'))
+//   credits        : end credits (placeholder; track 14 still in production)
 //   ch1…ch9        : chapter mode chapters 1–9 (one slot per chapter)
 //   chase          : Red Tide pursuit (no trigger yet — call playTrack('chase'))
 //   infinite-early : infinite mode, zones 0–3 (lighter palettes)
@@ -29,9 +28,8 @@
   // and CDN fallbacks for sandbox previews that don't serve binary assets.
   const TRACKS = {
     menu:     ['measured-by-the-dark.mp3'],
-    prologue: ['a-curva-da-espera.mp3'],
     gameover: ['a-curva-da-espera.mp3'],
-    credits:  ['a-curva-da-espera.mp3'],
+    credits:  null,
     ch1: ['against-the-crimson-tide.mp3'],
     ch2: ['timing-the-blink.mp3'],
     ch3: ['punto-de-fuga.mp3'],
