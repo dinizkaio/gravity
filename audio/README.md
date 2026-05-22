@@ -19,8 +19,9 @@ fall back to their act bucket so the music never goes silent.
 | `ch3`  | chapter mode chapter 3 (Tides of Jupiter — comets)                      | punto-de-fuga.mp3               |
 | `ch4`  | chapter mode chapter 4 (Wanderers — black holes)                        | where-the-weight-settles.mp3    |
 | `ch5`  | chapter mode chapter 5 (Threshold — radiation)                          | the-phantom-sign.mp3            |
+| `ch7`  | chapter mode chapter 7 (Eye of the Abyss — binary pulsars)              | kinetic-burn.mp3                |
 | `act2` | chapter mode chapter 6 (Sea of Shadows)                                 | contra-a-mare-vermelha.mp3      |
-| `act3` | chapter mode chapters 7–9 (Eye of the Abyss / Tesseract / Aurora)       | contra-a-mare-vermelha-alt.mp3  |
+| `act3` | chapter mode chapters 8–9 (Tesseract / Aurora)                          | contra-a-mare-vermelha-alt.mp3  |
 
 In **infinite mode** the bus cycles `act1 → act2 → act3` by zone index, so
 filling those slots also colours the endless run.
