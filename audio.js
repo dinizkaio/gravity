@@ -27,6 +27,7 @@
   const TRACKS = {
     menu: ['measured-by-the-dark.mp3'],
     act1: ['against-the-crimson-tide.mp3'],
+    ch2:  ['timing-the-blink.mp3'],
     act2: ['contra-a-mare-vermelha.mp3'],
     act3: ['contra-a-mare-vermelha-alt.mp3'],
   };
@@ -344,7 +345,12 @@
     setSfxVolume(s.sound);
   }
 
+  // The slot table is being migrated from 3 act-buckets to one slot per
+  // chapter (ch1…ch9) + chase/infinite/credits as new tracks arrive. Each
+  // chapter id falls through to its dedicated slot if there's one, else to
+  // its act bucket so the gap is never silent during the migration.
   function trackKeyForChapter(id) {
+    if (id === 2) return 'ch2';
     if (!id || id <= 3) return 'act1';
     if (id <= 6) return 'act2';
     return 'act3';

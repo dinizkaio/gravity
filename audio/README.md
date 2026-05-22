@@ -7,10 +7,15 @@ them, auto-advances when one ends, and crossfades into the next.
 
 ## Slots
 
+The bus is migrating from 3 act-buckets to one slot per chapter as the
+14-track soundtrack lands. Chapters that don't have a dedicated track yet
+fall back to their act bucket so the music never goes silent.
+
 | Slot   | Used in                                                                 | Currently                       |
 |--------|-------------------------------------------------------------------------|---------------------------------|
 | `menu` | intro, main menu, map, bestiary, settings, boss intro, game over        | measured-by-the-dark.mp3        |
-| `act1` | chapter mode chapters 1–3 (Awakening / Broken Belt / Tides of Jupiter)  | against-the-crimson-tide.mp3    |
+| `act1` | chapter mode chapters 1, 3 (Awakening / Tides of Jupiter)               | against-the-crimson-tide.mp3    |
+| `ch2`  | chapter mode chapter 2 (Broken Belt — pulsars)                          | timing-the-blink.mp3            |
 | `act2` | chapter mode chapters 4–6 (Wanderers / Threshold / Sea of Shadows)      | contra-a-mare-vermelha.mp3      |
 | `act3` | chapter mode chapters 7–9 (Eye of the Abyss / Tesseract / Aurora)       | contra-a-mare-vermelha-alt.mp3  |
 
