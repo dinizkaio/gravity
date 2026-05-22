@@ -7,25 +7,22 @@ them, auto-advances when one ends, and crossfades into the next.
 
 ## Slots
 
-The bus is migrating from 3 act-buckets to one slot per chapter as the
-14-track soundtrack lands. Chapters that don't have a dedicated track yet
-fall back to their act bucket so the music never goes silent.
-
-| Slot       | Used in                                                                 | Currently                       |
-|------------|-------------------------------------------------------------------------|---------------------------------|
-| `menu`     | main menu, map, bestiary, settings, boss intro                          | measured-by-the-dark.mp3        |
-| `prologue` | opening narrative ("Antes do silêncio, havia luz…")                     | a-curva-da-espera.mp3           |
-| `gameover` | death screen                                                            | a-curva-da-espera.mp3           |
-| `credits`  | end credits (no trigger yet — call `AudioBus.playTrack('credits')`)      | a-curva-da-espera.mp3           |
-| `act1`     | chapter mode chapter 1 (Awakening)                                      | against-the-crimson-tide.mp3    |
-| `ch2`      | chapter mode chapter 2 (Broken Belt — pulsars)                          | timing-the-blink.mp3            |
-| `ch3`      | chapter mode chapter 3 (Tides of Jupiter — comets)                      | punto-de-fuga.mp3               |
-| `ch4`      | chapter mode chapter 4 (Wanderers — black holes)                        | where-the-weight-settles.mp3    |
-| `ch5`      | chapter mode chapter 5 (Threshold — radiation)                          | the-phantom-sign.mp3            |
-| `ch6`      | chapter mode chapter 6 (Sea of Shadows — asteroids)                     | danza-fatal.mp3                 |
-| `ch7`      | chapter mode chapter 7 (Eye of the Abyss — binary pulsars)              | kinetic-burn.mp3                |
-| `ch8`             | chapter mode chapter 8 (Tesseract — threshold of the red tide)   | limite-cero.mp3                 |
-| `act3`            | chapter mode chapter 9 (Aurora)                                  | contra-a-mare-vermelha-alt.mp3  |
+| Slot              | Used in                                                          | Currently                       |
+|-------------------|------------------------------------------------------------------|---------------------------------|
+| `menu`            | main menu, map, bestiary, settings, boss intro                   | measured-by-the-dark.mp3        |
+| `prologue`        | opening narrative ("Antes do silêncio, havia luz…")              | a-curva-da-espera.mp3           |
+| `gameover`        | death screen                                                     | a-curva-da-espera.mp3           |
+| `credits`         | end credits (no trigger yet — call `AudioBus.playTrack('credits')`) | a-curva-da-espera.mp3        |
+| `ch1`             | chapter 1 (Awakening)                                            | against-the-crimson-tide.mp3    |
+| `ch2`             | chapter 2 (Broken Belt — pulsars)                                | timing-the-blink.mp3            |
+| `ch3`             | chapter 3 (Tides of Jupiter — comets)                            | punto-de-fuga.mp3               |
+| `ch4`             | chapter 4 (Wanderers — black holes)                              | where-the-weight-settles.mp3    |
+| `ch5`             | chapter 5 (Threshold — radiation)                                | the-phantom-sign.mp3            |
+| `ch6`             | chapter 6 (Sea of Shadows — asteroids)                           | danza-fatal.mp3                 |
+| `ch7`             | chapter 7 (Eye of the Abyss — binary pulsars)                    | kinetic-burn.mp3                |
+| `ch8`             | chapter 8 (Tesseract — threshold of the red tide)                | limite-cero.mp3                 |
+| `ch9`             | chapter 9 + final boss (Aurora)                                  | gravity-and-bone.mp3            |
+| `chase`           | Red Tide pursuit (no trigger yet — call `AudioBus.playTrack('chase')`) | contra-a-mare-vermelha-alt.mp3 |
 | `infinite-early`  | infinite mode, zones 0–3 (blue void → emerald sea)               | contra-a-mare-vermelha.mp3      |
 | `infinite-late`   | infinite mode, zones 4–7 (crimson twilight → aurora)             | mare-sem-peso.mp3               |
 

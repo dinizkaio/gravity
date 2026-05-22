@@ -16,9 +16,8 @@
 //   prologue       : opening narrative ("Antes do silêncio, havia luz...")
 //   gameover       : death screen
 //   credits        : end credits (plays via AudioBus.playTrack('credits'))
-//   act1           : chapter mode chapter 1 (Awakening)
-//   ch2…ch8        : chapter mode chapters 2–8 (one slot per chapter)
-//   act3           : chapter mode chapter 9 (until track 13 lands)
+//   ch1…ch9        : chapter mode chapters 1–9 (one slot per chapter)
+//   chase          : Red Tide pursuit (no trigger yet — call playTrack('chase'))
 //   infinite-early : infinite mode, zones 0–3 (lighter palettes)
 //   infinite-late  : infinite mode, zones 4–7 (denser palettes)
 
@@ -33,15 +32,16 @@
     prologue: ['a-curva-da-espera.mp3'],
     gameover: ['a-curva-da-espera.mp3'],
     credits:  ['a-curva-da-espera.mp3'],
-    act1: ['against-the-crimson-tide.mp3'],
-    ch2:  ['timing-the-blink.mp3'],
-    ch3:  ['punto-de-fuga.mp3'],
-    ch4:  ['where-the-weight-settles.mp3'],
-    ch5:  ['the-phantom-sign.mp3'],
-    ch6:  ['danza-fatal.mp3'],
-    ch7:  ['kinetic-burn.mp3'],
-    ch8:  ['limite-cero.mp3'],
-    act3: ['contra-a-mare-vermelha-alt.mp3'],
+    ch1: ['against-the-crimson-tide.mp3'],
+    ch2: ['timing-the-blink.mp3'],
+    ch3: ['punto-de-fuga.mp3'],
+    ch4: ['where-the-weight-settles.mp3'],
+    ch5: ['the-phantom-sign.mp3'],
+    ch6: ['danza-fatal.mp3'],
+    ch7: ['kinetic-burn.mp3'],
+    ch8: ['limite-cero.mp3'],
+    ch9: ['gravity-and-bone.mp3'],
+    chase:           ['contra-a-mare-vermelha-alt.mp3'],
     'infinite-early': ['contra-a-mare-vermelha.mp3'],
     'infinite-late':  ['mare-sem-peso.mp3'],
   };
@@ -359,10 +359,7 @@
     setSfxVolume(s.sound);
   }
 
-  // The slot table is being migrated from 3 act-buckets to one slot per
-  // chapter (ch1…ch9) + chase/infinite/credits as new tracks arrive. Each
-  // chapter id falls through to its dedicated slot if there's one, else to
-  // its act bucket so the gap is never silent during the migration.
+  // One slot per chapter. ch1 is also the fallback for unknown/missing ids.
   function trackKeyForChapter(id) {
     if (id === 2) return 'ch2';
     if (id === 3) return 'ch3';
@@ -371,8 +368,8 @@
     if (id === 6) return 'ch6';
     if (id === 7) return 'ch7';
     if (id === 8) return 'ch8';
-    if (!id || id <= 3) return 'act1';
-    return 'act3';
+    if (id === 9) return 'ch9';
+    return 'ch1';
   }
   // Infinite mode has 8 zones (see INFINITE_ZONES in data.js). The first
   // half (blue void → emerald sea, lighter palettes) gets the early track;
