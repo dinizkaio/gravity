@@ -21,8 +21,9 @@ fall back to their act bucket so the music never goes silent.
 | `ch5`  | chapter mode chapter 5 (Threshold — radiation)                          | the-phantom-sign.mp3            |
 | `ch6`  | chapter mode chapter 6 (Sea of Shadows — asteroids)                     | danza-fatal.mp3                 |
 | `ch7`  | chapter mode chapter 7 (Eye of the Abyss — binary pulsars)              | kinetic-burn.mp3                |
+| `ch8`  | chapter mode chapter 8 (Tesseract — threshold of the red tide)          | limite-cero.mp3                 |
 | `act2` | infinite mode (until `infinite-early` lands)                            | contra-a-mare-vermelha.mp3      |
-| `act3` | chapter mode chapters 8–9 (Tesseract / Aurora) + infinite (last zones)  | contra-a-mare-vermelha-alt.mp3  |
+| `act3` | chapter mode chapter 9 (Aurora) + infinite (last zones)                 | contra-a-mare-vermelha-alt.mp3  |
 
 In **infinite mode** the bus cycles `act1 → act2 → act3` by zone index, so
 filling those slots also colours the endless run.

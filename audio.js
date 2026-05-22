@@ -33,6 +33,7 @@
     ch5:  ['the-phantom-sign.mp3'],
     ch6:  ['danza-fatal.mp3'],
     ch7:  ['kinetic-burn.mp3'],
+    ch8:  ['limite-cero.mp3'],
     act2: ['contra-a-mare-vermelha.mp3'],
     act3: ['contra-a-mare-vermelha-alt.mp3'],
   };
@@ -361,6 +362,7 @@
     if (id === 5) return 'ch5';
     if (id === 6) return 'ch6';
     if (id === 7) return 'ch7';
+    if (id === 8) return 'ch8';
     if (!id || id <= 3) return 'act1';
     return 'act3';
   }
