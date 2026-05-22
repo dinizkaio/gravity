@@ -529,11 +529,7 @@ function darken(hex, amt) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function CreditsScreen({ onBack }) {
-  const rows = [
-    { label: window.t('credits.game_label'),   value: window.t('credits.game_value') },
-    { label: window.t('credits.music_label'),  value: window.t('credits.music_value') },
-    { label: window.t('credits.assist_label'), value: window.t('credits.assist_value') },
-  ];
+  const creators = window.t('credits.creators') || [];
 
   return (
     <div className="stage" style={{ background: '#02030a' }}>
@@ -549,19 +545,26 @@ function CreditsScreen({ onBack }) {
 
       <div className="abs-center fade-in-up" style={{ textAlign: 'center', zIndex: 10, width: '90%', maxWidth: 640 }}>
         <h1 className="title-hero glow-bone" style={{ marginBottom: 12 }}>{window.t('game.name')}</h1>
-        <div className="serif-i" style={{ fontSize: 18, color: 'var(--bone-dim)', marginBottom: 56 }}>
+        <div className="serif-i" style={{ fontSize: 18, color: 'var(--bone-dim)', marginBottom: 48 }}>
           {window.t('credits.subtitle')}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 28, marginBottom: 56 }}>
-          {rows.map((r, i) => (
-            <div key={i}>
-              <div className="label" style={{ marginBottom: 6 }}>— {r.label} —</div>
-              <div className="serif" style={{ fontSize: 22, color: 'var(--bone)', letterSpacing: '0.04em' }}>
-                {r.value}
+        <div style={{ marginBottom: 48 }}>
+          <div className="label" style={{ marginBottom: 16 }}>— {window.t('credits.creators_label')} —</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {creators.map((name, i) => (
+              <div key={i} className="serif" style={{ fontSize: 20, color: 'var(--bone)', letterSpacing: '0.04em' }}>
+                {name}
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 56 }}>
+          <div className="label" style={{ marginBottom: 6 }}>— {window.t('credits.assist_label')} —</div>
+          <div className="serif" style={{ fontSize: 18, color: 'var(--bone-dim)', letterSpacing: '0.04em' }}>
+            {window.t('credits.assist_value')}
+          </div>
         </div>
 
         <div className="serif-i" style={{ fontSize: 18, color: 'var(--amber-glow)', letterSpacing: '0.03em' }}>
