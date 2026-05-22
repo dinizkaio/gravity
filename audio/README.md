@@ -12,7 +12,7 @@ them, auto-advances when one ends, and crossfades into the next.
 | `menu`            | main menu, map, bestiary, settings, boss intro                   | measured-by-the-dark.mp3        |
 | `prologue`        | opening narrative ("Antes do silêncio, havia luz…")              | a-curva-da-espera.mp3           |
 | `gameover`        | death screen                                                     | a-curva-da-espera.mp3           |
-| `credits`         | end credits (no trigger yet — call `AudioBus.playTrack('credits')`) | a-curva-da-espera.mp3        |
+| `credits`         | end credits screen                                               | brillamos-al-final.mp3          |
 | `ch1`             | chapter 1 (Awakening)                                            | against-the-crimson-tide.mp3    |
 | `ch2`             | chapter 2 (Broken Belt — pulsars)                                | timing-the-blink.mp3            |
 | `ch3`             | chapter 3 (Tides of Jupiter — comets)                            | punto-de-fuga.mp3               |

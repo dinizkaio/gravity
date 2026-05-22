@@ -14,7 +14,7 @@
 //
 //   menu           : intro, main menu, map, bestiary, settings, boss intro
 //   gameover       : death screen
-//   credits        : end credits (placeholder; track 14 still in production)
+//   credits        : end credits screen
 //   ch1…ch9        : chapter mode chapters 1–9 (one slot per chapter)
 //   chase          : Red Tide pursuit (no trigger yet — call playTrack('chase'))
 //   infinite-early : infinite mode, zones 0–3 (lighter palettes)
@@ -29,7 +29,7 @@
   const TRACKS = {
     menu:     ['measured-by-the-dark.mp3'],
     gameover: ['a-curva-da-espera.mp3'],
-    credits:  null,
+    credits:  ['brillamos-al-final.mp3'],
     ch1: ['against-the-crimson-tide.mp3'],
     ch2: ['timing-the-blink.mp3'],
     ch3: ['punto-de-fuga.mp3'],
