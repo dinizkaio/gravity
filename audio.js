@@ -73,6 +73,11 @@
   let pendingKey = null;         // most recently requested slot
   let musicVolume = 0.5;
   let unlockInstalled = false;
+  // Monotonic counter that lets a later tryPlay supersede the async onStarted
+  // of an earlier one — otherwise a slow play() promise can resolve after a
+  // newer call, leak its audio into the pool still playing, and overwrite
+  // currentAudio with stale state.
+  let playToken = 0;
 
   // Per-slot playlist state. Lazily built on first request, invalidated and
   // rebuilt if TRACKS[slot] is edited at runtime (handy for live tweaks via
@@ -242,17 +247,29 @@
     audio.__pl_advanced = false;
   }
 
+  // Fade out every track in the pool except `keep`. Used by tryPlay and
+  // stopMusic to silence audios that were abandoned mid-promise — without
+  // this sweep, a play() that resolved late stays in the pool playing
+  // forever because currentAudio moved on without ever pausing it.
+  function silenceAllExcept(keep, fadeS) {
+    for (const audio of audioPool.values()) {
+      if (audio === keep) continue;
+      detachPlaylistHandler(audio);
+      if (!audio.paused || audio.volume > 0.001) {
+        fadeAudio(audio, audio.volume, 0, fadeS);
+      }
+    }
+  }
+
   function tryPlay() {
     if (pendingKey == null) return;
     const filename = currentFilename(pendingKey);
 
-    // Slot intentionally silent (null or []) — fade out whatever is playing.
+    // Slot intentionally silent (null or []) — fade out everything.
     if (!filename) {
-      if (currentAudio) {
-        detachPlaylistHandler(currentAudio);
-        fadeAudio(currentAudio, currentAudio.volume, 0, 1);
-        currentAudio = null;
-      }
+      ++playToken;
+      silenceAllExcept(null, 1);
+      currentAudio = null;
       currentKey = pendingKey;
       return;
     }
@@ -270,11 +287,13 @@
     const slotChange = currentKey !== pendingKey;
     const fadeS = slotChange ? SLOT_CROSSFADE_S : PLAYLIST_CROSSFADE_S;
 
-    const old = currentAudio;
-    if (old && old !== a) {
-      detachPlaylistHandler(old);
-      fadeAudio(old, old.volume, 0, fadeS);
-    }
+    // Bump the play token before we kick off the async play(). Any in-flight
+    // onStarted from a previous tryPlay sees the mismatch and bails.
+    const myToken = ++playToken;
+
+    // Fade out every other audible track in the pool (not just the previous
+    // currentAudio) so anything abandoned by a prior race is silenced too.
+    silenceAllExcept(a, fadeS);
 
     // Start at silent and play; bail to the unlock listener if autoplay refuses.
     a.volume = 0;
@@ -282,6 +301,12 @@
     try { result = a.play(); } catch (e) { result = Promise.reject(e); }
 
     const onStarted = () => {
+      if (myToken !== playToken) {
+        // A newer tryPlay already took over — pause this one so it doesn't
+        // keep playing silently in the background.
+        try { a.pause(); } catch (e) {}
+        return;
+      }
       fadeAudio(a, 0, musicVolume, fadeS);
       currentAudio = a;
       currentKey = pendingKey;
@@ -291,6 +316,7 @@
 
     if (result && typeof result.then === 'function') {
       result.then(onStarted).catch(err => {
+        if (myToken !== playToken) return;
         console.warn('[audio] play() rejected — waiting for next user gesture.', err && err.message);
         ensureUnlockListeners();
       });
@@ -307,11 +333,9 @@
 
   function stopMusic(fadeOut = 1) {
     pendingKey = null;
-    if (currentAudio) {
-      detachPlaylistHandler(currentAudio);
-      fadeAudio(currentAudio, currentAudio.volume, 0, fadeOut);
-      currentAudio = null;
-    }
+    ++playToken;
+    silenceAllExcept(null, fadeOut);
+    currentAudio = null;
     currentKey = null;
   }
 
