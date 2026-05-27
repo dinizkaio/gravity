@@ -295,7 +295,13 @@
     // currentAudio) so anything abandoned by a prior race is silenced too.
     silenceAllExcept(a, fadeS);
 
-    // Start at silent and play; bail to the unlock listener if autoplay refuses.
+    // Invalidate any in-flight fade on `a` itself before we reset its volume.
+    // Without this, a fade tick from an earlier silenceAllExcept (when `a`
+    // was being faded out as a non-keep audio) keeps running on rAF and
+    // overwrites the `a.volume = 0` below on its next frame — the new play()
+    // then starts at the old fade's interpolated volume and produces an
+    // audible blip until onStarted finally resolves and installs its own fade.
+    a.__fadeToken = (a.__fadeToken || 0) + 1;
     a.volume = 0;
     let result;
     try { result = a.play(); } catch (e) { result = Promise.reject(e); }

@@ -84,12 +84,18 @@ function IntroScreen({ onContinue }) {
   const lines = window.t('intro.lines');
   const total = lines.length;
   const [step, setStep] = useState(0);
+  // Browser autoplay policy blocks the menu track until the user taps,
+  // and the prologue auto-scrolls without needing input. Wait for an
+  // explicit first interaction before starting the scroll so the music
+  // catches up with the text rather than only kicking in at "Continuar".
+  const [started, setStarted] = useState(false);
 
   useEffect(() => {
+    if (!started) return;
     if (step >= total - 1) return;
     const t = setTimeout(() => setStep(s => s + 1), 2200);
     return () => clearTimeout(t);
-  }, [step, total]);
+  }, [started, step, total]);
 
   // Orbiting spark on the background
   const sparkRef = useRef(null);
@@ -197,6 +203,23 @@ function IntroScreen({ onContinue }) {
           }} />
         ))}
       </div>
+
+      {/* First-interaction gate — the audio bus needs a user gesture before
+          autoplay is allowed, and this overlay both unlocks it and starts
+          the auto-scroll. Any tap on the stage dismisses it. onClick covers
+          old iOS Safari that doesn't dispatch pointer events. */}
+      {!started && (
+        <div
+          className="overlay-blur"
+          onPointerDown={() => setStarted(true)}
+          onClick={() => setStarted(true)}
+          style={{ cursor: 'pointer' }}>
+          <div className="serif-i fade-in"
+               style={{ fontSize: 20, color: 'var(--bone-dim)', letterSpacing: '0.06em', animation: 'glow 4s ease-in-out infinite' }}>
+            · {window.t('intro.tap_to_start')} ·
+          </div>
+        </div>
+      )}
     </div>
   );
 }
