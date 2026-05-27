@@ -302,15 +302,24 @@
     // then starts at the old fade's interpolated volume and produces an
     // audible blip until onStarted finally resolves and installs its own fade.
     a.__fadeToken = (a.__fadeToken || 0) + 1;
+    // Strip stale playlist handlers from a prior attach on the same element.
+    // silenceAllExcept does this for every non-keep audio; without doing it
+    // for `a` too, a near-end timeupdate could fire during the play()
+    // promise window and recursively re-enter tryPlay before onStarted runs.
+    detachPlaylistHandler(a);
     a.volume = 0;
     let result;
     try { result = a.play(); } catch (e) { result = Promise.reject(e); }
 
     const onStarted = () => {
       if (myToken !== playToken) {
-        // A newer tryPlay already took over — pause this one so it doesn't
-        // keep playing silently in the background.
-        try { a.pause(); } catch (e) {}
+        // A newer tryPlay already took over. Pause this audio so it doesn't
+        // keep playing silently in the background — but only if the newer
+        // call settled on a different element, otherwise we'd silence the
+        // very track that newer onStarted just installed as currentAudio.
+        if (a !== currentAudio) {
+          try { a.pause(); } catch (e) {}
+        }
         return;
       }
       fadeAudio(a, 0, musicVolume, fadeS);
