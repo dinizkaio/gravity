@@ -138,6 +138,7 @@ const I18N = {
       label: 'Prólogo',
       skip: 'Pular prólogo',
       continue: 'Continuar',
+      tap_to_start: 'toque para começar',
       lines: [
         'Antes do silêncio, havia luz.',
         'Antes da luz, havia gravidade.',
@@ -396,6 +397,7 @@ const I18N = {
       label: 'Prologue',
       skip: 'Skip prologue',
       continue: 'Continue',
+      tap_to_start: 'tap to begin',
       lines: [
         'Before silence, there was light.',
         'Before light, there was gravity.',
@@ -654,6 +656,7 @@ const I18N = {
       label: 'Prólogo',
       skip: 'Saltar prólogo',
       continue: 'Continuar',
+      tap_to_start: 'toca para empezar',
       lines: [
         'Antes del silencio, hubo luz.',
         'Antes de la luz, hubo gravedad.',
