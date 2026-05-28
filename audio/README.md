@@ -20,9 +20,8 @@ them, auto-advances when one ends, and crossfades into the next.
 | `ch5`             | chapter 5 (Threshold — radiation)                                | the-phantom-sign.mp3            |
 | `ch6`             | chapter 6 (Sea of Shadows — asteroids)                           | danza-fatal.mp3                 |
 | `ch7`             | chapter 7 (Eye of the Abyss — binary pulsars)                    | kinetic-burn.mp3                |
-| `ch8`             | chapter 8 (Tesseract — threshold of the red tide)                | limite-cero.mp3                 |
+| `ch8`             | chapter 8 (Tesseract — threshold of the red tide; 2-track playlist) | limite-cero.mp3 + contra-a-mare-vermelha-alt.mp3 |
 | `ch9`             | chapter 9 + final boss (Aurora)                                  | gravity-and-bone.mp3            |
-| `chase`           | Red Tide pursuit (no trigger yet — call `AudioBus.playTrack('chase')`) | contra-a-mare-vermelha-alt.mp3 |
 | `infinite-early`  | infinite mode, zones 0–3 (blue void → emerald sea)               | contra-a-mare-vermelha.mp3      |
 | `infinite-late`   | infinite mode, zones 4–7 (crimson twilight → aurora)             | mare-sem-peso.mp3               |
 
