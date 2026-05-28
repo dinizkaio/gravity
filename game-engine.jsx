@@ -35,17 +35,15 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
   const [, setLocaleTick] = useState(0);
   useEffect(() => window.onLocaleChange(() => setLocaleTick(n => n + 1)), []);
 
-  // Music: pick the right slot for the spark's current location and crossfade
-  // to it. In chapter mode this fires once on mount and again whenever the
-  // spark crosses into a new chapter band; in infinite mode it fires when
-  // the zone banner trips.
+  // Music: a single 'gameplay' playlist covers chapter mode (except the
+  // final boss) and all of infinite mode, so this only switches slots
+  // when the spark reaches chapter 9 and the boss track takes over. The
+  // HUD's "next music" button shuffles within the gameplay slot via
+  // AudioBus.skipTrack() — see the hud-tr block below.
   useEffect(() => {
     if (!window.AudioBus) return;
-    const key = (mode === 'infinite')
-      ? window.AudioBus.trackKeyForZone(window.INFINITE_ZONES.findIndex(z => z.key === zoneKey))
-      : window.AudioBus.trackKeyForChapter(liveChapterId);
-    window.AudioBus.playTrack(key);
-  }, [mode, liveChapterId, zoneKey]);
+    window.AudioBus.playTrack(window.AudioBus.trackKeyForRun(mode, liveChapterId));
+  }, [mode, liveChapterId]);
 
   const isInfinite = mode === 'infinite';
 
@@ -1048,8 +1046,19 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
         )}
       </div>
 
-      {/* HUD top-right: altitude + score */}
+      {/* HUD top-right: skip-track button (hidden on final boss) + altitude + score.
+          pointer-events stays 'auto' only on the button itself so taps on the
+          altitude/score area still fall through to the canvas as orbit input. */}
       <div className="hud-corner hud-tr">
+        {liveChapterId !== 9 && (
+          <button
+            className="btn-text"
+            onClick={() => window.AudioBus && window.AudioBus.skipTrack()}
+            style={{ display: 'block', marginLeft: 'auto', marginBottom: 10, padding: 0, pointerEvents: 'auto' }}
+          >
+            {window.t('hud.skip_track')}
+          </button>
+        )}
         <div className="label" style={{ marginBottom: 6 }}>{window.t('hud.altitude')}</div>
         <div className="score-display hud-distance">
           {distance}<span style={{ fontSize: 18, color: 'var(--bone-dim)', marginLeft: 4 }}>m</span>

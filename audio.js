@@ -8,16 +8,19 @@
 // Tracks are referenced by SLOT, not by chapter id, so adding new music
 // is just an edit to the TRACKS map below. Each slot holds a PLAYLIST
 // (array of filenames). The bus shuffles the order on first entry,
-// crossfades between tracks as one ends, and resumes where it left off
-// if the player leaves and returns to the same slot. A null/empty slot
-// fades out and stays silent.
+// avoids putting the just-played track back at position 0 on reshuffle,
+// and crossfades between tracks as one ends. A null/empty slot fades
+// out and stays silent. AudioBus.skipTrack() advances the current
+// slot's playlist on demand (driven by the "next music" HUD button).
 //
-//   menu           : intro, main menu, map, bestiary, settings, boss intro
-//   gameover       : death screen
-//   credits        : end credits screen
-//   ch1…ch9        : chapter mode chapters 1–9 (ch8 is a 2-track playlist)
-//   infinite-early : infinite mode, zones 0–3 (lighter palettes)
-//   infinite-late  : infinite mode, zones 4–7 (denser palettes)
+//   menu     : intro, main menu, map, bestiary, settings, boss intro
+//   gameover : death screen
+//   credits  : end credits screen
+//   gameplay : every chapter run (except the final boss) and infinite mode —
+//              one shuffled playlist that loops forever, so the player isn't
+//              stuck with one track per chapter
+//   ch9      : final boss (Aurora) — isolated so it never crossfades away
+//              mid-fight
 
 (function () {
   // ── Manifest. Each slot is an array of filenames under audio/. ───────────
@@ -29,21 +32,20 @@
     menu:     ['measured-by-the-dark.mp3'],
     gameover: ['a-curva-da-espera.mp3'],
     credits:  ['brillamos-al-final.mp3'],
-    ch1: ['against-the-crimson-tide.mp3'],
-    ch2: ['timing-the-blink.mp3'],
-    ch3: ['punto-de-fuga.mp3'],
-    ch4: ['where-the-weight-settles.mp3'],
-    ch5: ['the-phantom-sign.mp3'],
-    ch6: ['danza-fatal.mp3'],
-    ch7: ['kinetic-burn.mp3'],
-    // Chapter 8 (Limiar da Maré Vermelha) — both tracks were composed around
-    // the same "tensão crescente da Maré Vermelha" mood, so the playlist
-    // shuffles and crossfades between them rather than parking one on a
-    // dynamic overlay that fired on every orbit capture.
-    ch8: ['limite-cero.mp3', 'contra-a-mare-vermelha-alt.mp3'],
+    gameplay: [
+      'against-the-crimson-tide.mp3',
+      'timing-the-blink.mp3',
+      'punto-de-fuga.mp3',
+      'where-the-weight-settles.mp3',
+      'the-phantom-sign.mp3',
+      'danza-fatal.mp3',
+      'kinetic-burn.mp3',
+      'limite-cero.mp3',
+      'contra-a-mare-vermelha-alt.mp3',
+      'contra-a-mare-vermelha.mp3',
+      'mare-sem-peso.mp3',
+    ],
     ch9: ['gravity-and-bone.mp3'],
-    'infinite-early': ['contra-a-mare-vermelha.mp3'],
-    'infinite-late':  ['mare-sem-peso.mp3'],
   };
 
   // Seconds of overlap when one track in a playlist ends and the next begins.
@@ -348,6 +350,20 @@
     tryPlay();
   }
 
+  // Advance the currently-playing slot's playlist by one and crossfade into
+  // the next track. Single-track slots (menu, gameover, ch9, etc.) are a
+  // no-op — there's nothing to skip to. Driven by the "next music" HUD
+  // button; the player taps it when they want a different song without
+  // waiting for the current one to end.
+  function skipTrack() {
+    if (!currentKey) return;
+    const st = ensurePlaylist(currentKey);
+    if (st.order.length <= 1) return;
+    advanceCursor(currentKey);
+    pendingKey = currentKey;
+    tryPlay();
+  }
+
   function stopMusic(fadeOut = 1) {
     pendingKey = null;
     ++playToken;
@@ -398,25 +414,11 @@
     setSfxVolume(s.sound);
   }
 
-  // One slot per chapter. ch1 is also the fallback for unknown/missing ids.
-  function trackKeyForChapter(id) {
-    if (id === 2) return 'ch2';
-    if (id === 3) return 'ch3';
-    if (id === 4) return 'ch4';
-    if (id === 5) return 'ch5';
-    if (id === 6) return 'ch6';
-    if (id === 7) return 'ch7';
-    if (id === 8) return 'ch8';
-    if (id === 9) return 'ch9';
-    return 'ch1';
-  }
-  // Infinite mode has 8 zones (see INFINITE_ZONES in data.js). The first
-  // half (blue void → emerald sea, lighter palettes) gets the early track;
-  // the second half (crimson twilight → aurora, denser palettes) gets the
-  // late one, matching the climb in visual intensity.
-  function trackKeyForZone(zoneIndex) {
-    const i = Math.max(0, zoneIndex | 0);
-    return i < 4 ? 'infinite-early' : 'infinite-late';
+  // The final boss (chapter 9, Aurora) gets its own isolated track so the
+  // shared 'gameplay' playlist can't crossfade away mid-fight. Every other
+  // chapter — and all of infinite mode — shares the 'gameplay' playlist.
+  function trackKeyForRun(mode, chapterId) {
+    return (mode === 'chapter' && chapterId === 9) ? 'ch9' : 'gameplay';
   }
 
   // SFX helpers ──────────────────────────────────────────────────────────────
@@ -552,9 +554,9 @@
   ensureUnlockListeners();
 
   window.AudioBus = {
-    playTrack, stopMusic,
+    playTrack, skipTrack, stopMusic,
     setMusicVolume, setSfxVolume, applySettings,
-    trackKeyForChapter, trackKeyForZone,
+    trackKeyForRun,
     sfxCapture, sfxRelease, sfxBoostTurn, sfxCollapse, sfxDeath, sfxPhase,
     TRACKS, playlists,
     debug,
