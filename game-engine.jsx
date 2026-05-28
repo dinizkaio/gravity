@@ -518,12 +518,16 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
 
       // Chase music: once the regression line is visible, swap to the 'chase'
       // slot when it crowds the spark and swap back when it falls behind.
-      // Hysteresis (250 in / 500 out) keeps the transition from flickering on
-      // every release-and-recover.
+      // The hysteresis used to be 250 in / 500 out, but the regression line
+      // starts at startingY+220 — already inside the trigger band — so every
+      // first capture activated chase and every release deactivated it, making
+      // the chase track feel tied to tap-and-hold. Tightened to 100 in / 600
+      // out so chase only fires when the line is genuinely closing in (the
+      // spark is in real danger), not during routine orbit capture.
       if (regressionRevealed) {
         const gap = regressionY - player.y;   // positive = spark is above the line
-        if (!chaseRef && gap < 250)      { chaseRef = true;  setChaseActive(true); }
-        else if (chaseRef && gap > 500)  { chaseRef = false; setChaseActive(false); }
+        if (!chaseRef && gap < 100)      { chaseRef = true;  setChaseActive(true); }
+        else if (chaseRef && gap > 600)  { chaseRef = false; setChaseActive(false); }
       }
 
       // Regression death check
