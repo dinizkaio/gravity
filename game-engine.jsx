@@ -1047,14 +1047,15 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
       </div>
 
       {/* HUD top-right: skip-track button (hidden on final boss) + altitude + score.
-          pointer-events stays 'auto' only on the button itself so taps on the
-          altitude/score area still fall through to the canvas as orbit input. */}
+          The button is positioned just below the cinematic letterbox (.letterbox.top
+          is 60 px tall with z-index 100, so anything at the default top: 24 px would
+          be buried behind it) and gets pointer-events: 'auto' on the button itself
+          so taps on the altitude/score area still fall through to the canvas. */}
       <div className="hud-corner hud-tr">
         {liveChapterId !== 9 && (
           <button
-            className="btn-text"
+            className="btn-text hud-skip-track"
             onClick={() => window.AudioBus && window.AudioBus.skipTrack()}
-            style={{ display: 'block', marginLeft: 'auto', marginBottom: 10, padding: 0, pointerEvents: 'auto' }}
           >
             {window.t('hud.skip_track')}
           </button>
