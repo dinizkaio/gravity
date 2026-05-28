@@ -15,8 +15,7 @@
 //   menu           : intro, main menu, map, bestiary, settings, boss intro
 //   gameover       : death screen
 //   credits        : end credits screen
-//   ch1…ch9        : chapter mode chapters 1–9 (one slot per chapter)
-//   chase          : Red Tide pursuit (no trigger yet — call playTrack('chase'))
+//   ch1…ch9        : chapter mode chapters 1–9 (ch8 is a 2-track playlist)
 //   infinite-early : infinite mode, zones 0–3 (lighter palettes)
 //   infinite-late  : infinite mode, zones 4–7 (denser palettes)
 
@@ -37,9 +36,12 @@
     ch5: ['the-phantom-sign.mp3'],
     ch6: ['danza-fatal.mp3'],
     ch7: ['kinetic-burn.mp3'],
-    ch8: ['limite-cero.mp3'],
+    // Chapter 8 (Limiar da Maré Vermelha) — both tracks were composed around
+    // the same "tensão crescente da Maré Vermelha" mood, so the playlist
+    // shuffles and crossfades between them rather than parking one on a
+    // dynamic overlay that fired on every orbit capture.
+    ch8: ['limite-cero.mp3', 'contra-a-mare-vermelha-alt.mp3'],
     ch9: ['gravity-and-bone.mp3'],
-    chase:           ['contra-a-mare-vermelha-alt.mp3'],
     'infinite-early': ['contra-a-mare-vermelha.mp3'],
     'infinite-late':  ['mare-sem-peso.mp3'],
   };

@@ -26,9 +26,6 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
   // Cosmetic sub-phase within the live chapter (1..chapter.levels). Not a save
   // point — retry always lands at the start of the chapter.
   const [subPhase, setSubPhase] = useState({ n: 1, total: chapter ? chapter.levels : 12, open: false });
-  // True when the regression horizon is close enough to feel like a pursuit
-  // — swaps the music to the 'chase' slot until the spark climbs clear again.
-  const [chaseActive, setChaseActive] = useState(false);
 
   // Keep latest paused flag readable inside the rAF closure without re-running the engine effect
   const pausedRef = useRef(!!paused);
@@ -41,16 +38,14 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
   // Music: pick the right slot for the spark's current location and crossfade
   // to it. In chapter mode this fires once on mount and again whenever the
   // spark crosses into a new chapter band; in infinite mode it fires when
-  // the zone banner trips. The 'chase' slot overrides everything when the
-  // regression horizon is closing in.
+  // the zone banner trips.
   useEffect(() => {
     if (!window.AudioBus) return;
-    if (chaseActive) { window.AudioBus.playTrack('chase'); return; }
     const key = (mode === 'infinite')
       ? window.AudioBus.trackKeyForZone(window.INFINITE_ZONES.findIndex(z => z.key === zoneKey))
       : window.AudioBus.trackKeyForChapter(liveChapterId);
     window.AudioBus.playTrack(key);
-  }, [mode, liveChapterId, zoneKey, chaseActive]);
+  }, [mode, liveChapterId, zoneKey]);
 
   const isInfinite = mode === 'infinite';
 
@@ -115,7 +110,6 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
     let regressionY = startingY + 220;
     let regressionTargetY = startingY + 220;
     let regressionRevealed = false;
-    let chaseRef = false;            // tracks chaseActive locally to avoid setState spam
 
     // Per-orbit acceleration tracking. Each completed loop around an anchor
     // multiplies omega by ORBIT_BOOST_PER_TURN (player gains tangential speed).
@@ -515,16 +509,6 @@ function GameCanvas({ chapter, mode, paused, onPause, onDeath }) {
 
       // Regression line animation
       regressionY += (regressionTargetY - regressionY) * Math.min(1, dt * 1.2);
-
-      // Chase music: once the regression line is visible, swap to the 'chase'
-      // slot when it crowds the spark and swap back when it falls behind.
-      // Hysteresis (250 in / 500 out) keeps the transition from flickering on
-      // every release-and-recover.
-      if (regressionRevealed) {
-        const gap = regressionY - player.y;   // positive = spark is above the line
-        if (!chaseRef && gap < 250)      { chaseRef = true;  setChaseActive(true); }
-        else if (chaseRef && gap > 500)  { chaseRef = false; setChaseActive(false); }
-      }
 
       // Regression death check
       if (player.y > regressionY + 60 && !orbitAnchor) {
