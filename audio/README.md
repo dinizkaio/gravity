@@ -7,26 +7,18 @@ them, auto-advances when one ends, and crossfades into the next.
 
 ## Slots
 
-| Slot              | Used in                                                          | Currently                       |
-|-------------------|------------------------------------------------------------------|---------------------------------|
-| `menu`            | main menu, map, bestiary, settings, boss intro                   | measured-by-the-dark.mp3        |
-| `prologue`        | opening narrative ("Antes do silêncio, havia luz…")              | a-curva-da-espera.mp3           |
-| `gameover`        | death screen                                                     | a-curva-da-espera.mp3           |
-| `credits`         | end credits screen                                               | brillamos-al-final.mp3          |
-| `ch1`             | chapter 1 (Awakening)                                            | against-the-crimson-tide.mp3    |
-| `ch2`             | chapter 2 (Broken Belt — pulsars)                                | timing-the-blink.mp3            |
-| `ch3`             | chapter 3 (Tides of Jupiter — comets)                            | punto-de-fuga.mp3               |
-| `ch4`             | chapter 4 (Wanderers — black holes)                              | where-the-weight-settles.mp3    |
-| `ch5`             | chapter 5 (Threshold — radiation)                                | the-phantom-sign.mp3            |
-| `ch6`             | chapter 6 (Sea of Shadows — asteroids)                           | danza-fatal.mp3                 |
-| `ch7`             | chapter 7 (Eye of the Abyss — binary pulsars)                    | kinetic-burn.mp3                |
-| `ch8`             | chapter 8 (Tesseract — threshold of the red tide; 2-track playlist) | limite-cero.mp3 + contra-a-mare-vermelha-alt.mp3 |
-| `ch9`             | chapter 9 + final boss (Aurora)                                  | gravity-and-bone.mp3            |
-| `infinite-early`  | infinite mode, zones 0–3 (blue void → emerald sea)               | contra-a-mare-vermelha.mp3      |
-| `infinite-late`   | infinite mode, zones 4–7 (crimson twilight → aurora)             | mare-sem-peso.mp3               |
+| Slot       | Used in                                                          | Currently                       |
+|------------|------------------------------------------------------------------|---------------------------------|
+| `menu`     | main menu, map, bestiary, settings, boss intro, prologue         | measured-by-the-dark.mp3        |
+| `gameover` | death screen                                                     | a-curva-da-espera.mp3           |
+| `credits`  | end credits screen                                                | brillamos-al-final.mp3          |
+| `gameplay` | every chapter (except the final boss) and all of infinite mode — one shuffled playlist that loops forever | against-the-crimson-tide.mp3, timing-the-blink.mp3, punto-de-fuga.mp3, where-the-weight-settles.mp3, the-phantom-sign.mp3, danza-fatal.mp3, kinetic-burn.mp3, limite-cero.mp3, contra-a-mare-vermelha-alt.mp3, contra-a-mare-vermelha.mp3, mare-sem-peso.mp3 |
+| `ch9`      | final boss (Aurora) — isolated so it never crossfades away mid-fight | gravity-and-bone.mp3            |
 
-In **infinite mode** the bus picks `infinite-early` (zones 0–3) or
-`infinite-late` (zones 4–7) based on the current zone index.
+The HUD's top-right "▶▶  Skip" button calls `AudioBus.skipTrack()`, which
+advances the current slot's playlist by one and crossfades into the next
+track. It's hidden during the final boss (single-track slot — nothing to
+skip to).
 
 ## Adding tracks
 
