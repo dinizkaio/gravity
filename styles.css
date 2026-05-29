@@ -186,17 +186,15 @@ html, body { height: 100%; overflow: hidden; background: var(--void-deep); color
 /* Game HUD */
 .hud-corner { position: absolute; padding: 24px 28px; pointer-events: none; }
 .hud-tl { top: 0; left: 0; }
-.hud-tr { top: 0; right: 0; text-align: right; }
+/* hud-tr's content sits below the 60 px .letterbox.top instead of being
+   partially tucked behind it — otherwise the score and the skip-music
+   button collide inside the letterbox band. */
+.hud-tr { top: 0; right: 0; text-align: right; padding-top: 76px; }
 .hud-bl { bottom: 0; left: 0; }
 .hud-br { bottom: 0; right: 0; text-align: right; }
 
-/* Skip-music button sits absolutely positioned just under the cinematic
-   letterbox (60 / 36 / 24 px at the three breakpoints) — the rest of the
-   hud-tr column (altitude / score / points) is intentionally pinned to
-   top: 0 and partially tucked behind the letterbox for the framing
-   effect, but a tiny 11 px text button at y=24 would vanish entirely. */
 .hud-skip-track {
-  position: absolute; top: 70px; right: 28px; padding: 0; margin: 0;
+  display: block; margin: 0 0 12px auto; padding: 0;
   pointer-events: auto;
 }
 
@@ -330,7 +328,7 @@ html, body { height: 100%; overflow: hidden; background: var(--void-deep); color
   .boss-name { font-size: 44px !important; letter-spacing: 0.1em !important; }
 
   .letterbox { height: 36px; }
-  .hud-skip-track { top: 46px; right: 18px; }
+  .hud-tr { padding-top: 52px; }
 
   .hud-corner { padding: 16px 18px; }
   .hud-title { font-size: 18px; }
@@ -373,7 +371,7 @@ html, body { height: 100%; overflow: hidden; background: var(--void-deep); color
   .lives-row { gap: 8px; }
   .life-dot { width: 8px; height: 8px; }
   .letterbox { height: 24px; }
-  .hud-skip-track { top: 34px; right: 14px; }
+  .hud-tr { padding-top: 40px; }
 
   .intro-narrative { top: 80px; bottom: 120px; padding: 4px 12px; }
   .intro-line { font-size: 15px; margin-bottom: 6px; }

@@ -88,7 +88,16 @@ function IntroScreen({ onContinue }) {
   // and the prologue auto-scrolls without needing input. Wait for an
   // explicit first interaction before starting the scroll so the music
   // catches up with the text rather than only kicking in at "Continuar".
+  // If the player just stares at the gate for a few seconds we drop it
+  // anyway and let the prologue roll — the music stays silent until they
+  // tap something later, but the reading flow isn't blocked.
   const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    if (started) return;
+    const t = setTimeout(() => setStarted(true), 3500);
+    return () => clearTimeout(t);
+  }, [started]);
 
   useEffect(() => {
     if (!started) return;
